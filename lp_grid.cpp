@@ -28,12 +28,55 @@ index3 inv_linear_id (lp_grid lpg, int linear_id)
     return id;
 }
 
+int rotate(lp_grid lpg, unsigned int origin, unsigned int destination)
+{
+    if ((origin>=lpg.particle_count) or (destination>=lpg.particle_count))
+	return 1;
+
+    unsigned int i;
+    particle* tmp_storage;
+
+    if (origin<destination) {
+	tmp_storage = lpg.linear_grid[origin];
+	for (i=origin+1; i<=destination; i++) {
+	    lpg.linear_grid[i-1] = lpg.linear_grid[i];
+	}
+	lpg.linear_grid[destination] = tmp_storage;
+	for (i=0; i<lpg.cell_count; i++) {
+	    if (lpg.anchors[i].linear_id>=(origin+1))
+		break;
+	}
+	while (lpg.anchors[i].linear_id<=destination) {
+	    lpg.anchors[i++].linear_id--;
+	}
+	return 0;
+    }
+
+    if (origin>destination) {
+	tmp_storage = lpg.linear_grid[origin];
+	for (i=origin-1; i>=destination; i--) {
+	    lpg.linear_grid[i+1] = lpg.linear_grid[i];
+	}
+	lpg.linear_grid[destination] = tmp_storage;
+	for (i=0; i<lpg.cell_count; i++) {
+	    if (lpg.anchors[i].linear_id>=destination)
+		break;
+	}
+	while (lpg.anchors[i].linear_id<=(origin-1)) {
+	    lpg.anchors[i++].linear_id++;
+	}
+	return 0;
+
+    }
+}
+
 lp_grid make_lp_grid (btVector3 origin, float step, int x, int y, int z, std::vector<particle> particles)
 {
-    lp_grid lpg; int i,j,k;
-    lpg.x = x; lpg.y = y; lpg.z = z;
-    lpg.origin = origin;
-    lpg.step = step;
+    unsigned int cell_count = x*y*z;
+    lp_grid lpg; unsigned int i,j,k, cid, pid;
+    lpg.particle_count = particles.size();
+    lpg.x = x; lpg.y = y; lpg.z = z; lpg.cell_count = x*y*z;
+    lpg.origin = origin; lpg.step = step;
 
     // Make points in centers of cells...
     std::vector<Point> points;
@@ -47,41 +90,46 @@ lp_grid make_lp_grid (btVector3 origin, float step, int x, int y, int z, std::ve
     // ...and let CGAL spatially sort them.
     CGAL::hilbert_sort(points.begin(), points.end());
 
-    lpg.linear_map = (int*) malloc(x*y*z*sizeof(unsigned int));
-    lpg.anchors = (int*) malloc(x*y*z*sizeof(unsigned int));
-    lpg.linear_grid = (particle**) malloc (particles.size() * sizeof(particle*));
+    lpg.linear_map = (unsigned int*) malloc(cell_count * sizeof(unsigned int));
+    lpg.anchors = (anchor*) malloc(cell_count * sizeof(anchor));
+    lpg.linear_grid = (particle**) malloc (lpg.particle_count * sizeof(particle*));
+
+    // Populate LINEAR_MAP
     Point p;
-    for (int pid=0; pid<points.size(); pid++) {
-	p = points[pid]; i = p.x(); j=p.y(); k=p.z();
+    for (unsigned int pid=0; pid<points.size(); pid++) {
+	p = points[pid];
+	lpg.linear_map[linear_id(lpg, p.x(), p.y(), p.z())] = pid;
     }
-    
-    return lpg;
-}
 
-// std::vector<particle*> grid_ref (grid g, int i, int j, int k)
-// {
-//     if ((i<0) or (j<0) or (k<0) or (i>g.x) or (j>g.y) or (k>g.z))
-// 	return std::vector<particle*>();
-//     return *g.linear_map[linear_id(g, i, j, k)];
-// }
+    // Initialize ANCHOR.LINEAR_ID's to 0 and ANCHOR.GRID_ID's to respective indices
+    for (i=0; i<x; i++) {
+	for (j=0; j<y; j++) {
+	    for (k=0; k<z; k++) {
+		cid = linear_id(lpg, i, j, k);
+		lpg.anchors[cid].linear_id = 0;
+		lpg.anchors[cid].grid_id.i = i;
+		lpg.anchors[cid].grid_id.j = j;
+		lpg.anchors[cid].grid_id.k = k;
+	    }
+	}
+    }
 
-int populate_grid (lp_grid &lpg, std::vector<particle> particles)
-{
-    int i, j, k;
+    // populate LINEAR_GRID
     btVector3 position;
-
-    for (int id=0; id<particles.size(); id++) {
-	position = particle_position(particles[id]);
+    for (pid=0; pid<particles.size(); pid++) {
+	position = particle_position(particles[pid]);
 	i = floor(position.getX()/lpg.step);
 	j = floor(position.getY()/lpg.step);
 	k = floor(position.getZ()/lpg.step);
+	lpg.linear_grid[lpg.particle_count-1] = &particles[pid];
+	// origin = last particle of last cell (always empty if grid not full)
+	// destination = last particle of target cell
+	rotate(lpg, lpg.anchors[linear_id(lpg, i, j, k)+1].linear_id-1, lpg.particle_count-1);
     }
-    return 0;
+    return lpg;
 }
 
-// int update_grid (grid &g)
-// {
-//     for (int cd=0; g.linear_grid.size(); cd++) {
-//     }
-//     return 0;
-// }
+int update_lp_grid (lp_grid lpg)
+{
+    return 0;
+}

@@ -7,6 +7,11 @@
 #include "terrain.h"
 #include "fluid.h"
 
+struct anchor {
+    unsigned int linear_id;
+    index3 grid_id;
+};
+
 /* Structure LP_GRID: Spatial hash table to store pointers to the simulation particles.
    Member documentation:
    ORIGIN	: Coordinates of grid origin (minimum coordinate point of AABB).
@@ -23,11 +28,11 @@
    LINEAR_GRID  : Array containing pointers to particles
 */
 struct lp_grid {
-    int* linear_map;
-    int* anchors;
+    unsigned int* linear_map;
+    anchor* anchors;
     particle** linear_grid;
     btVector3 origin;
-    int x, y, z;
+    unsigned int x, y, z, cell_count, particle_count;
     float step;
 };
 
