@@ -26,6 +26,7 @@ unsigned int particle_laddress (particle p, lp_grid lpg)
     return linearize_address(lpg, i, j, k);
 }
 
+// Move particle when ORIGIN < DESTINATION (= lpg.anchors[target]-1).
 int move_particle_right(lp_grid lpg, unsigned int origin, unsigned int destination)
 {
     unsigned int i;
@@ -34,16 +35,19 @@ int move_particle_right(lp_grid lpg, unsigned int origin, unsigned int destinati
 	lpg.particles[i-1] = lpg.particles[i];
     }
     lpg.particles[destination] = tmp_storage;
+
+    // Adjustment of anchors inbetween
     for (i=0; i<lpg.cell_count; i++) {
-	if (lpg.anchors[i].cell_start>=(origin+1))
+	if (lpg.anchors[i] >= (origin+1))
 	    break;
     }
-    while (lpg.anchors[i].cell_start<=destination) {
-	lpg.anchors[i++].cell_start--;
+    while (lpg.anchors[i] <= destination) {
+	lpg.anchors[i++]--;
     }
     return 0;
 }
 
+// Move particle when DESTINATION (= lpg.anchors[target+1]) < ORIGIN
 int move_particle_left(lp_grid lpg, unsigned int origin, unsigned int destination)
 {
     unsigned int i;
@@ -52,12 +56,14 @@ int move_particle_left(lp_grid lpg, unsigned int origin, unsigned int destinatio
 	lpg.particles[i+1] = lpg.particles[i];
     }
     lpg.particles[destination] = tmp_storage;
+
+    // Adjustment of anchors inbetween
     for (i=0; i<lpg.cell_count; i++) {
-	if (lpg.anchors[i].cell_start>=destination)
+	if (lpg.anchors[i] >= destination)
 	    break;
     }
-    while (lpg.anchors[i].cell_start<=(origin-1)) {
-	lpg.anchors[i++].cell_start++;
+    while (lpg.anchors[i] <= (origin-1)) {
+	lpg.anchors[i++]++;
     }
     return 0;
 }
@@ -68,13 +74,14 @@ lp_grid make_lp_grid (btVector3 origin, float step,
 		      std::vector<particle> particles)
 {
     // Parameter passing
-    unsigned int cell_count = x*y*z;
     lp_grid lpg; unsigned int i,j,k;
+    lpg.origin = origin;
+    lpg.step = step;
+    lpg.x = x; lpg.y = y; lpg.z = z;
+    lpg.cell_count = x*y*z;
     lpg.particle_count = particles.size();
-    lpg.x = x; lpg.y = y; lpg.z = z; lpg.cell_count = x*y*z;
-    lpg.origin = origin; lpg.step = step;
 
-    // Make points in centers of cells...
+    // Make points in centers of cells and spatially sort them
     std::vector<Point> points;
     for (i=0; i<x; i++) {
 	for (j=0; j<y; j++) {
@@ -83,40 +90,39 @@ lp_grid make_lp_grid (btVector3 origin, float step,
 	    }
 	}
     }
-    // ...and let CGAL spatially sort them.
     CGAL::hilbert_sort(points.begin(), points.end());
 
-    lpg.map = (unsigned int*) malloc(cell_count * sizeof(unsigned int));
-    lpg.anchors = (anchor*) malloc((1+cell_count) * sizeof(anchor));
-    lpg.particles = (particle**) malloc (lpg.particle_count * sizeof(particle*));
+    // Allocate memory for the 3 arrays
+    lpg.map = (unsigned int*) malloc(lpg.cell_count * sizeof(unsigned int));
+    lpg.anchors = (unsigned int*) malloc((lpg.cell_count+1) * sizeof(unsigned int));
+    lpg.particles = (particle**) malloc ((lpg.particle_count+1) * sizeof(particle*));
 
     // Populate MAP
-    Point p; unsigned int aid;	// aid = anchor index
-    for (aid=0; aid<points.size(); aid++) {
-	p = points[aid];
-	lpg.map[linearize_address(lpg, p.x(), p.y(), p.z())] = aid;
+    Point p;
+    unsigned int cind;		// cind = cell index
+    for (cind=0; cind<points.size(); cind++) {
+	p = points[cind];
+	lpg.map[linearize_address(lpg, p.x(), p.y(), p.z())] = cind;
     }
 
     // ANCHOR initialization
     for (i=0; i<x; i++) {
 	for (j=0; j<y; j++) {
 	    for (k=0; k<z; k++) {
-		aid = lpg.map[linearize_address(lpg, i, j, k)];
-		lpg.anchors[aid].cell_start = 0;
-		lpg.anchors[aid].cell_laddress = linearize_address(lpg, i, j, k);
+		cind = lpg.map[linearize_address(lpg, i, j, k)];
+		lpg.anchors[cind] = 0;
 	    }
 	}
     }
-    lpg.anchors[lpg.cell_count].cell_start = lpg.particle_count;
-    lpg.anchors[lpg.cell_count].cell_laddress = lpg.cell_count+1;
+    lpg.anchors[lpg.cell_count] = lpg.particle_count;
 
     // Populate PARTICLES
-    unsigned int pid;		// pid = particle index
-    for (pid=0; pid<particles.size(); pid++) {
-	// destination = last particle of target cell
-	unsigned int destination = lpg.anchors[particle_laddress(particles[pid], lpg)+1].cell_start-1;
-	// origin = last particle of last cell (always empty if grid not full)
-	lpg.particles[lpg.particle_count-1] = &particles[pid];
+    unsigned int pind;		// pind = particle index
+    for (pind=0; pind<particles.size(); pind++) {
+	// destination = lpg.anchors[target+1]-1 (last particle of target cell)
+	unsigned int destination = lpg.anchors[lpg.map[particle_laddress(particles[pind], lpg)]+1]-1;
+	// origin = the extra last slot in PARTICLES array
+	lpg.particles[lpg.particle_count] = &particles[pind];
 	move_particle_left(lpg, lpg.particle_count-1, destination);
     }
     return lpg;
@@ -124,14 +130,17 @@ lp_grid make_lp_grid (btVector3 origin, float step,
 
 int update_lp_grid (lp_grid lpg)
 {
-    for (unsigned int cid=0; cid<lpg.cell_count; cid++) {
-	for (unsigned int pid=lpg.anchors[cid].cell_start; pid<lpg.anchors[cid+1].cell_start; pid++) {
-	    unsigned int origin_laddress = lpg.anchors[cid].cell_laddress;
-	    unsigned int destination_laddress = particle_laddress(*lpg.particles[pid], lpg);
-	    if (origin_laddress != destination_laddress) {
-		if (lpg.map[origin_laddress] < lpg.map[destination_laddress])
-		    move_particle_left(lpg, pid, lpg.anchors[cid].cell_start);
-		else move_particle_right(lpg, pid, lpg.anchors[cid+1].cell_start-1);
+    for (unsigned int origin_cind=0; origin_cind<lpg.cell_count; origin_cind++) {
+	for (unsigned int pind=lpg.anchors[origin_cind];
+	     pind<lpg.anchors[origin_cind+1];
+	     pind++) {
+	    // destination_cind is the index of the cell to which the current particle
+	    // actully belongs according to its position in space
+	    unsigned int destination_cind = lpg.map[particle_laddress(*lpg.particles[pind], lpg)];
+	    if (origin_cind != destination_cind) {
+		if (origin_cind < destination_cind)
+		    move_particle_right(lpg, pind, lpg.anchors[destination_cind]);
+		else move_particle_left(lpg, pind, lpg.anchors[destination_cind+1]-1);
 	    }
 	}
     }
@@ -141,10 +150,8 @@ int update_lp_grid (lp_grid lpg)
 particle_range get_cell(lp_grid lpg, unsigned int i, unsigned int j, unsigned int k)
 {
     particle_range pr;
-    unsigned int aid = lpg.map[linearize_address(lpg, i, j, k)];
-    pr.start = lpg.particles[lpg.anchors[aid].cell_start];
-    pr.end = lpg.particles[lpg.anchors[aid+1].cell_start-1];
+    unsigned int cind = lpg.map[linearize_address(lpg, i, j, k)];
+    pr.start = lpg.particles[lpg.anchors[cind]];
+    pr.end = lpg.particles[lpg.anchors[cind+1]];
     return pr;
 }
-
-    
