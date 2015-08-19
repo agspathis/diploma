@@ -53,7 +53,7 @@ int main (void)
 
     // Grid construction
     btVector3 origin = btVector3(0, 0, 0);
-    make_lp_grid (origin, 2.4, 20, 30, 40, particles);
+    make_lp_grid (origin, 2.4, 20u, 30u, 40u, particles);
 
     // Simulation
     for (int i=0; i<STEPS; i++) {
