@@ -59,11 +59,11 @@ int move_particle_left(lp_grid lpg, ulong origin, ulong destination)
 
     // Adjustment of anchors inbetween
     for (i=0; i<lpg.cell_count; i++) {
-	if (lpg.anchors[i] >= destination)
-	    break;
+    	if (lpg.anchors[i] >= destination)
+    	    break;
     }
     while (lpg.anchors[i] <= (origin-1)) {
-	lpg.anchors[i++]++;
+    	lpg.anchors[i++]++;
     }
     return 0;
 }
@@ -126,17 +126,16 @@ lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles)
     }
     lpg.anchors[lpg.cell_count] = lpg.particle_count;
 
-    // ERROR
     // Populate PARTICLES
-    // ulong pind;		// pind = particle index
-    // for (pind=0; pind<lpg.particle_count; pind++) {
-    // 	// destination = lpg.anchors[target+1]-1 (last particle of target cell)
-    // 	cind = lpg.map[particle_laddress(particles[pind], lpg)];
-    // 	ulong destination = lpg.anchors[cind+1]-1;
-    // 	// origin = the extra last slot in PARTICLES array
-    // 	lpg.particles[lpg.particle_count] = &particles[pind];
-    // 	move_particle_left(lpg, lpg.particle_count-1, destination);
-    // }
+    ulong pind;		// pind = particle index
+    for (pind=0; pind<lpg.particle_count; pind++) {
+    	// destination = lpg.anchors[target+1]-1 (last particle of target cell)
+    	cind = lpg.map[particle_laddress(particles[pind], lpg)];
+    	ulong destination = lpg.anchors[cind+1]-1;
+    	// origin = the extra last slot in PARTICLES array
+    	lpg.particles[lpg.particle_count] = &particles[pind];
+	move_particle_left(lpg, lpg.particle_count-1, destination);
+    }
 
     return lpg;
 }

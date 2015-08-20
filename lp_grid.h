@@ -16,18 +16,19 @@ typedef unsigned long ulong;
   Member documentation:
   ORIGIN	  : Coordinates of grid origin (minimum-coordinate point of AABB).
   STEP		  : Grid consists of adjacent cubic cells with side length equal to STEP.
-  X, Y, Z	  : Number of cells along axes x, y anx z, respectively.
+  X, Y, Z	  : Number of cells along axes x, y and z, respectively.
   CELL_COUNT      : Total number of cells (X*Y*Z).
   PARTICLE_COUNT  : Total number of particles.
   MAP		  : Array map of linearized addresses (3D->1D by function LINEARIZE_ADDRESS)
-                    to linear indices (on ANCHOR_MAP), thus implementing the locality-preserving
-		    3D->1D mapping.
+                    to linear indices (on ANCHOR_MAP), thus implementing the locality 
+		    preserving 3D->1D mapping.
   ANCHORS         : Array containing the cell ANCHORs, i.e. index of the first of cell
 		    particles in PARTICLES. ANCHORs correspond to cells in ascending linear
-		    order, so the relation A[i-1] <= A[i] holds for all elements of this array.
-		    When CS[i-1]=CS[i], the cell corresponding to CS[i-1] contains no particles.
-		    This array has CELL_COUNT+1 elements, where the last anchor is equal to
-		    PARTICLE_COUNT for loop termination conditions.
+		    order, so the relation A[i-1] <= A[i] holds for all elements of this 
+		    array. When CS[i-1]=CS[i], the cell corresponding to CS[i-1] contains
+		    no particles. This array has CELL_COUNT+1 elements, where the last
+		    anchor refers to a spare cell containing particles which are out of
+		    grid bounds (also serves for loop termination conditions).
   PARTICLES       : Array containing pointers to actual simulation particles. It has
                     PARTICLE_COUNT+1 elements. The extra slot is used for spare storage
 		    to gradually initialize the array, for loop termination conditions
