@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS= -I/usr/include/bullet -lBulletDynamics -lBulletCollision -lLinearMath -lCGAL -std=c++11 -pthread
+CFLAGS= -I/usr/include/bullet -lBulletDynamics -lBulletCollision -lLinearMath -lCGAL -std=c++11 -pthread -g
 
 all: main.o terrain.o fluid.o lp_grid.o sph.o utilities.o
 	$(CC) main.o terrain.o fluid.o lp_grid.o sph.o utilities.o\

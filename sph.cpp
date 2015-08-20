@@ -44,11 +44,11 @@ int interactions_in_segment (int particles_per_thread, int segment, std::vector<
     btScalar distance;
     std::vector<interaction> segment_interactions;
 
-    int start_id = particles_per_thread * segment;
-    int end_id = ((particles_per_thread*(segment+1) < particles.size()) ?
-		  start_id+particles_per_thread :
-		  particles.size());
-    for (int i=start_id; i<end_id; i++) {
+    int start_ind = particles_per_thread * segment;
+    int end_ind = ((particles_per_thread*(segment+1) < particles.size()) ?
+		   start_ind+particles_per_thread :
+		   particles.size());
+    for (int i=start_ind; i<end_ind; i++) {
 	posi = particle_position(particles[i]);
 	for (int j=i+1; j<particles.size(); j++) {
 	    posj = particle_position(particles[j]);

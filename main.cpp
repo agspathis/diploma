@@ -12,7 +12,7 @@
 #define STEPS 20
 
 // Global parameters
-const char* obj_filename = "/home/agspathis/diploma/models/obj/box.obj";
+const char* obj_filename = "/home/agspathis/diplom/models/obj/box.obj";
 
 int main (void)
 {
@@ -53,7 +53,7 @@ int main (void)
 
     // Grid construction
     btVector3 origin = btVector3(0, 0, 0);
-    make_lp_grid (origin, 2.4, 20u, 30u, 40u, particles);
+    make_lp_grid (particles, 100);
 
     // Simulation
     for (int i=0; i<STEPS; i++) {
