@@ -8,7 +8,6 @@
 #include "sph.h"
 
 // Constants
-#define PARTICLES 10000
 #define STEPS 20
 
 // Global parameters
@@ -53,7 +52,7 @@ int main (void)
 
     // Grid construction
     btVector3 origin = btVector3(0, 0, 0);
-    make_lp_grid (particles, 100);
+    make_lp_grid (terrain_aabb, 10.0, particles);
 
     // Simulation
     for (int i=0; i<STEPS; i++) {

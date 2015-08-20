@@ -37,9 +37,9 @@ typedef unsigned long ulong;
 struct lp_grid {
     btVector3 origin;
     float step;
-    uint x, y, z, cell_count, particle_count;
-    uint* map;
-    uint* anchors;
+    ulong x, y, z, cell_count, particle_count;
+    ulong* map;
+    ulong* anchors;
     particle** particles;
 };
 
@@ -52,9 +52,9 @@ struct particle_range {
     particle* end;
 };
 
-lp_grid make_lp_grid (std::vector<particle> particles, uint desired_cell_count);
+lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles);
 
-particle_range get_cell(lp_grid lpg, uint i, uint j, uint k);
+particle_range get_cell(lp_grid lpg, ulong i, ulong j, ulong k);
 
 int update_lp_grid (lp_grid lpg);
 
