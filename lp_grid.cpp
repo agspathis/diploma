@@ -9,7 +9,7 @@
 using CGAL::Cartesian;
 using CGAL::Point_3;
 
-typedef Cartesian<float> Kernel;
+typedef Cartesian<ulong> Kernel;
 typedef Point_3<Kernel> Point;
 
 ulong linearize_address (lp_grid lpg, ulong i, ulong j, ulong k)
@@ -102,29 +102,20 @@ lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles)
     for (i=0; i<lpg.x; i++) {
 	for (j=0; j<lpg.y; j++) {
 	    for (k=0; k<lpg.z; k++) {
-		points.push_back(Point(1.0*i, 1.0*j, 1.0*k));
+		points.push_back(Point(i, j, k));
 	    }
 	}
     }
     CGAL::hilbert_sort(points.begin(), points.end());
-    // Populate MAP
-    Point p;
-    ulong cind;		// cind = cell index
+
+    // Initialize MAP
+    ulong cind;			// cind = cell index
     for (cind=0; cind<points.size(); cind++) {
-	p = points[cind];
-	lpg.map[linearize_address(lpg, p.x(), p.y(), p.z())] = cind;
+	lpg.map[linearize_address(lpg, points[cind].x(), points[cind].y(), points[cind].z())] = cind;
     }
 
-    // ANCHOR initialization
-    for (i=0; i<lpg.x; i++) {
-	for (j=0; j<lpg.y; j++) {
-	    for (k=0; k<lpg.z; k++) {
-		cind = lpg.map[linearize_address(lpg, i, j, k)];
-		lpg.anchors[cind] = 0;
-	    }
-	}
-    }
-    lpg.anchors[lpg.cell_count] = lpg.particle_count;
+    // Initialize ANCHORS to 0
+    for (cind=0; cind<=lpg.cell_count; cind++) lpg.anchors[cind] = 0;
 
     // Populate PARTICLES
     ulong pind;		// pind = particle index
