@@ -54,7 +54,7 @@ int main (void)
     // Grid construction
     btVector3 origin = btVector3(0, 0, 0);
     lp_grid lpg = make_lp_grid (terrain_aabb, smoothing_length, particles);
-    print_long_array(lpg.anchors, lpg.cell_count);
+    print_long_array(lpg.anchors, lpg.cell_count+1);
     // for (long anch=0; anch<=lpg.cell_count; anch++)
     // 	printf("%d\n", lpg.anchors[anch]);
 

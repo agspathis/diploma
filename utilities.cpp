@@ -54,7 +54,11 @@ int vtk_export (const char* filename, std::vector<particle> particles)
 
 int print_long_array(long* array, long count)
 {
-    for (long index=0; index<count; index++) 
-	printf("array[%d] = %d\n", index, array[index]);
+    for (long index=0; index<count; index++) {
+	printf("%d ", array[index]);
+	if (index % 16) continue;
+	printf("\n");
+    }
+    printf("\n");
     return 0;
 }

@@ -42,6 +42,10 @@ struct lp_grid {
     particle** particles;
 };
 
+lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles);
+
+int update_lp_grid (lp_grid lpg);
+
 /*
   Structure PARTICLE_RANGE represents the contents of a cell, from
   START (included) to END (not included -- first particle of next cell).
@@ -51,10 +55,6 @@ struct particle_range {
     particle* end;
 };
 
-lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles);
-
 particle_range get_cell(lp_grid lpg, long i, long j, long k);
-
-int update_lp_grid (lp_grid lpg);
 
 #endif
