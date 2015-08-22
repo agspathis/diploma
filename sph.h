@@ -8,8 +8,8 @@
 #include "terrain.h"
 
 struct interaction {
-    int i;
-    int j;
+    particle* p0;
+    particle* p1;
     btScalar distance;
     btVector3 direction;
     btScalar force;
@@ -17,8 +17,6 @@ struct interaction {
 
 float kernel(float r, float h);
 
-int apply_sph_forces(std::vector<particle> particles,
-		     float smoothing_length,
-		     btScalar particle_mass);
+int apply_sph_forces(lp_grid lpg, btScalar particle_mass)
 
 #endif

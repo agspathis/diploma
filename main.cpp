@@ -55,8 +55,6 @@ int main (void)
     btVector3 origin = btVector3(0, 0, 0);
     lp_grid lpg = make_lp_grid (terrain_aabb, smoothing_length, particles);
     print_long_array(lpg.anchors, lpg.cell_count+1);
-    // for (long anch=0; anch<=lpg.cell_count; anch++)
-    // 	printf("%d\n", lpg.anchors[anch]);
 
     // Simulation
     for (int i=0; i<STEPS; i++) {
@@ -64,7 +62,7 @@ int main (void)
 	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
 	printf("%d\n", i);
 	// sph forces
-	apply_sph_forces(particles, smoothing_length, particle_mass);
+	apply_sph_forces(lpg, particle_mass);
 	// export to vtk
 	std::string filepath = "frames/frame"+std::to_string(i)+".vtk";
 	vtk_export((const char*) filepath.c_str(), particles);

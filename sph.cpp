@@ -3,6 +3,7 @@
 
 #include "terrain.h"
 #include "sph.h"
+#include "lp_grid.h"
 #include "utilities.h"
 
 #define THREADS 100
@@ -31,12 +32,10 @@ float viscosity (float r, float h)
     return result;
 }
 
-// std::vector<interaction> forward_cell_interactions (grid g, int i, int j, int k,
-// 						    float smoothing_length
-						    
-
-int interactions_in_segment (int particles_per_thread, int segment, std::vector<particle>particles,
-			     float smoothing_length, std::vector<std::vector<interaction> > &interactions)
+int interactions_in_segment (int particles_per_thread, int segment,
+			     std::vector<particle>particles,
+			     float smoothing_length,
+			     std::vector<std::vector<interaction> > &interactions)
 {
     btVector3 posi;
     btVector3 posj;
@@ -70,10 +69,9 @@ int interactions_in_segment (int particles_per_thread, int segment, std::vector<
     return 0;
 }
 
-std::vector< std::vector<interaction> > collect_interactions_parallel (std::vector<particle> particles, float smoothing_length)
+std::vector< std::vector<interaction> > collect_interactions_parallel(lp_grid lpg)
 {
-    int particle_count = particles.size();
-    int particles_per_thread = ceil (particle_count/ (float) THREADS);
+    int particles_per_thread = ceil (lpg.particle_count / (float) THREADS);
     std::vector< std::vector<interaction> > interactions (THREADS);
     std::vector< std::thread > threads (THREADS);
     for (int i=0; i<threads.size(); i++) {
@@ -90,30 +88,28 @@ std::vector< std::vector<interaction> > collect_interactions_parallel (std::vect
     return interactions;
 }
 
-int clear_particle_data(std::vector<particle> &particles)
+int clear_particle_data(lp_grid lpg)
 {
-    for (int i=0; i<particles.size(); i++) {
-	particles[i].samples = 0;
-	particles[i].density = 0;
-	particles[i].pressure = 0;
+    for (long pi=0; pi<lpg.particle_count; pi++) {
+	lpg.particles[i]->samples = 0;
+	lpg.particles[i]->density = 0;
+	lpg.particles[i]->pressure = 0;
     }
     return 0;
 }
 
-int apply_sph_forces(std::vector<particle> particles,
-		     float smoothing_length,
-		     btScalar particle_mass)
-{
-    clear_particle_data(particles);
-    std::vector< std::vector<interaction> > interactions =
-	collect_interactions_parallel(particles, smoothing_length);
-    return 0;
-}
 
 int apply_interactions (std::vector< std::vector<interaction> > interactions,
-			std::vector<particle> particles,
 			float smoothing_length,
 			btScalar particle_mass)
 {
+    return 0;
+}
+
+int apply_sph_forces(lp_grid lpg, btScalar particle_mass)
+{
+    clear_particle_data(lpg);
+    std::vector< std::vector<interaction> > interactions =
+	collect_interactions_parallel(lpg);
     return 0;
 }
