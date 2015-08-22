@@ -7,9 +7,6 @@
 #include "terrain.h"
 #include "fluid.h"
 
-typedef unsigned int uint;
-typedef unsigned long ulong;
-
 /*
   Structure LP_GRID: Data structure to store pointers to the simulation particles,
   preserving locality between simulation and memory space.
@@ -38,9 +35,10 @@ typedef unsigned long ulong;
 struct lp_grid {
     btVector3 origin;
     float step;
-    ulong x, y, z, cell_count, particle_count;
-    ulong* map;
-    ulong* anchors;
+    long x, y, z;
+    long cell_count, particle_count;
+    long* map;
+    long* anchors;
     particle** particles;
 };
 
@@ -55,7 +53,7 @@ struct particle_range {
 
 lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles);
 
-particle_range get_cell(lp_grid lpg, ulong i, ulong j, ulong k);
+particle_range get_cell(lp_grid lpg, long i, long j, long k);
 
 int update_lp_grid (lp_grid lpg);
 

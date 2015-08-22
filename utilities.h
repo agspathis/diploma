@@ -14,4 +14,6 @@ btVector3 particle_position (particle p);
 // Export vector of particles to .vtk file
 int vtk_export(const char* filename, std::vector<particle> particles);
 
+int print_long_array(long* array, long count);
+
 #endif

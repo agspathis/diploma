@@ -37,22 +37,26 @@ int main (void)
     btRigidBody* terrain = new btRigidBody(t_ci);
     dynamics_world->addRigidBody(terrain);
 
-    printf("%f %f %f\n", terrain_aabb.min.getX(), terrain_aabb.min.getY(), terrain_aabb.min.getZ());
+    printf("min:%f %f %f\n", terrain_aabb.min.getX(), terrain_aabb.min.getY(), terrain_aabb.min.getZ());
+    printf("max:%f %f %f\n", terrain_aabb.max.getX(), terrain_aabb.max.getY(), terrain_aabb.max.getZ());
 
     // Particle construction
     aabb fluid_aabb;
     fluid_aabb.min = btVector3(-50, -50, -50);
     fluid_aabb.max = btVector3(50, 50, 50);
     btScalar particle_mass = 1.0;
-    btScalar particle_radius = 4.0;
+    btScalar particle_radius = 20.0;
     float smoothing_length = 4 * particle_radius;
-    std::vector<particle> particles = fluid_fill(fluid_aabb, particle_mass,
+    std::vector<particle> particles = fluid_fill(terrain_aabb, particle_mass,
 						 particle_radius, dynamics_world);
     printf("Particle count: %d\n", particles.size());
 
     // Grid construction
     btVector3 origin = btVector3(0, 0, 0);
-    make_lp_grid (terrain_aabb, 10.0, particles);
+    lp_grid lpg = make_lp_grid (terrain_aabb, smoothing_length, particles);
+    print_long_array(lpg.anchors, lpg.cell_count);
+    // for (long anch=0; anch<=lpg.cell_count; anch++)
+    // 	printf("%d\n", lpg.anchors[anch]);
 
     // Simulation
     for (int i=0; i<STEPS; i++) {

@@ -9,62 +9,58 @@
 using CGAL::Cartesian;
 using CGAL::Point_3;
 
-typedef Cartesian<ulong> Kernel;
+typedef Cartesian<long> Kernel;
 typedef Point_3<Kernel> Point;
 
-ulong linearize_address (lp_grid lpg, ulong i, ulong j, ulong k)
+long linearize_address (lp_grid lpg, long i, long j, long k)
 {
     return (i*lpg.y*lpg.z + j*lpg.z + k);
 }
 
-ulong particle_laddress (particle p, lp_grid lpg)
+long particle_laddress (lp_grid lpg, particle p)
 {
     btVector3 position = particle_position(p) - lpg.origin;
-    ulong i = floor(position.getX()/lpg.step);
-    ulong j = floor(position.getY()/lpg.step);
-    ulong k = floor(position.getZ()/lpg.step);
+    long i = floor(position.getX()/lpg.step);
+    long j = floor(position.getY()/lpg.step);
+    long k = floor(position.getZ()/lpg.step);
     return linearize_address(lpg, i, j, k);
 }
 
-// Move particle when ORIGIN < DESTINATION (= lpg.anchors[target]-1).
-int move_particle_right(lp_grid lpg, ulong origin, ulong destination)
+int insert_particle(lp_grid lpg, particle* pp)
 {
-    ulong i;
-    particle* tmp_storage = lpg.particles[origin];
-    for (i=origin+1; i<=destination; i++) {
-	lpg.particles[i-1] = lpg.particles[i];
-    }
-    lpg.particles[destination] = tmp_storage;
-
-    // Adjustment of anchors inbetween
-    for (i=0; i<lpg.cell_count; i++) {
-	if (lpg.anchors[i] >= (origin+1))
-	    break;
-    }
-    while (lpg.anchors[i] <= destination) {
-	lpg.anchors[i++]--;
-    }
+    long dcind = lpg.map[particle_laddress(lpg, *pp)];
+    printf("insertion laddress = %d\n", particle_laddress(lpg, *pp));
+    long destination = lpg.anchors[dcind+1];
+    for (long i=lpg.particle_count-1; i>=destination; i--)
+	lpg.particles[i+1l] = lpg.particles[i];
+    lpg.particles[destination] = pp;
+    for (long cind=dcind+1; cind<=lpg.cell_count; cind++)
+	lpg.anchors[cind]++;
     return 0;
 }
 
-// Move particle when DESTINATION (= lpg.anchors[target+1]) < ORIGIN
-int move_particle_left(lp_grid lpg, ulong origin, ulong destination)
+int move_particle(lp_grid lpg, long origin, long ocind, long dcind)
 {
-    ulong i;
+    long i, destination;
     particle* tmp_storage = lpg.particles[origin];
-    for (i=origin-1; i>=destination; i--) {
-	lpg.particles[i+1] = lpg.particles[i];
+
+    if (ocind < dcind) {
+	long destination = lpg.anchors[dcind]-1;
+	particle* tmp_storage = lpg.particles[origin];
+	for (long i=origin+1; i<=destination; i++) {
+	    lpg.particles[i-1] = lpg.particles[i];
+	}
+	for (i=ocind+1; i<=dcind; i++) lpg.anchors[i]--;
+    }
+    else {
+	destination = lpg.anchors[dcind+1];
+	particle* tmp_storage = lpg.particles[origin];
+	for (i=origin-1; i>=destination; i--) {
+	    lpg.particles[i+1] = lpg.particles[i];
+	}
+	for (i=dcind; i<=ocind; i++) lpg.anchors[i]++;
     }
     lpg.particles[destination] = tmp_storage;
-
-    // Adjustment of anchors inbetween
-    for (i=0; i<lpg.cell_count; i++) {
-    	if (lpg.anchors[i] >= destination)
-    	    break;
-    }
-    while (lpg.anchors[i] <= (origin-1)) {
-    	lpg.anchors[i++]++;
-    }
     return 0;
 }
 
@@ -81,8 +77,8 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, float step, std::vector<particl
 			    domain.min.getZ() - step/2);
 
     // Allocate memory for the 3 arrays
-    lpg->map	    = (ulong*) malloc(lpg->cell_count * sizeof(ulong));
-    lpg->anchors    = (ulong*) malloc((lpg->cell_count+1) * sizeof(ulong));
+    lpg->map	    = (long*) malloc(lpg->cell_count * sizeof(long));
+    lpg->anchors    = (long*) malloc((lpg->cell_count+1) * sizeof(long));
     lpg->particles  = (particle**) malloc ((lpg->particle_count+1) * sizeof(particle*));
 
     return 0;
@@ -91,7 +87,7 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, float step, std::vector<particl
 lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles)
 {
     // Grid parameter initialization/allocation
-    lp_grid lpg; ulong i,j,k;
+    lp_grid lpg; long i,j,k;
     allocate_lp_grid(&lpg, domain, step, particles);
 
     printf("x=%lu, y=%lu, z=%lu\n", lpg.x, lpg.y, lpg.z);
@@ -109,7 +105,7 @@ lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles)
     CGAL::hilbert_sort(points.begin(), points.end());
 
     // Initialize MAP
-    ulong cind;			// cind = cell index
+    long cind;			// cind = cell index
     for (cind=0; cind<points.size(); cind++) {
 	lpg.map[linearize_address(lpg, points[cind].x(), points[cind].y(), points[cind].z())] = cind;
     }
@@ -118,23 +114,16 @@ lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles)
     for (cind=0; cind<=lpg.cell_count; cind++) lpg.anchors[cind] = 0;
 
     // Populate PARTICLES
-    ulong pind;		// pind = particle index
-    for (pind=0; pind<lpg.particle_count; pind++) {
-    	// destination = lpg.anchors[target+1]-1 (last particle of target cell)
-    	cind = lpg.map[particle_laddress(particles[pind], lpg)];
-    	ulong destination = lpg.anchors[cind+1]-1;
-    	// origin = the extra last slot in PARTICLES array
-    	lpg.particles[lpg.particle_count] = &particles[pind];
-	move_particle_left(lpg, lpg.particle_count-1, destination);
-    }
+    for (long pind=0; pind<lpg.particle_count; pind++) // pind = particle index
+	insert_particle(lpg, &particles[pind]);
 
     return lpg;
 }
 
-particle_range get_cell(lp_grid lpg, ulong i, ulong j, ulong k)
+particle_range get_cell(lp_grid lpg, long i, long j, long k)
 {
     particle_range pr;
-    ulong cind = lpg.map[linearize_address(lpg, i, j, k)];
+    long cind = lpg.map[linearize_address(lpg, i, j, k)];
     pr.start = lpg.particles[lpg.anchors[cind]];
     pr.end = lpg.particles[lpg.anchors[cind+1]];
     return pr;
@@ -142,18 +131,12 @@ particle_range get_cell(lp_grid lpg, ulong i, ulong j, ulong k)
 
 int update_lp_grid (lp_grid lpg)
 {
-    for (ulong origin_cind=0; origin_cind<lpg.cell_count; origin_cind++) {
-	for (ulong pind=lpg.anchors[origin_cind];
-	     pind<lpg.anchors[origin_cind+1];
-	     pind++) {
-	    // destination_cind is the index of the cell to which the current particle
+    for (long ocind=0; ocind<lpg.cell_count; ocind++) {
+	for (long pind=lpg.anchors[ocind]; pind<lpg.anchors[ocind+1]; pind++) {
+	    // dcind is the index of the cell to which the current particle
 	    // actully belongs according to its position in space
-	    ulong destination_cind = lpg.map[particle_laddress(*lpg.particles[pind], lpg)];
-	    if (origin_cind != destination_cind) {
-		if (origin_cind < destination_cind)
-		    move_particle_right(lpg, pind, lpg.anchors[destination_cind]);
-		else move_particle_left(lpg, pind, lpg.anchors[destination_cind+1]-1);
-	    }
+	    long dcind = lpg.map[particle_laddress(lpg, *lpg.particles[pind])];
+	    move_particle(lpg, pind, ocind, dcind);
 	}
     }
     return 0;
