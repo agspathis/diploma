@@ -89,17 +89,16 @@ lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles)
     CGAL::hilbert_sort(points.begin(), points.end());
 
     // Initialize MAP
-    long cind;			// cind = cell index
-    for (cind=0; cind<points.size(); cind++) {
-	lpg.map[linearize_address(lpg, points[cind].x(), points[cind].y(), points[cind].z())] = cind;
+    long ci;
+    for (ci=0; ci<points.size(); ci++) {
+	lpg.map[linearize_address(lpg, points[ci].x(), points[ci].y(), points[ci].z())] = ci;
     }
 
     // Initialize ANCHORS to 0
-    for (cind=0; cind<=lpg.cell_count; cind++) lpg.anchors[cind] = 0;
+    for (ci=0; ci<=lpg.cell_count; ci++) lpg.anchors[ci] = 0;
 
     // Populate PARTICLES
-    for (long pind=0; pind<lpg.particle_count; pind++) // pind = particle index
-	insert_particle(lpg, &particles[pind]);
+    for (long pi=0; pi<lpg.particle_count; pi++) insert_particle(lpg, &particles[pi]);
 
     return lpg;
 }
@@ -144,8 +143,14 @@ int update_lp_grid (lp_grid lpg)
 particle_range get_cell(lp_grid lpg, long i, long j, long k)
 {
     particle_range pr;
-    long cind = lpg.map[linearize_address(lpg, i, j, k)];
-    pr.start = lpg.particles[lpg.anchors[cind]];
-    pr.end = lpg.particles[lpg.anchors[cind+1]];
+    long ci = lpg.map[linearize_address(lpg, i, j, k)];
+    if (ci == lpg.cell_count) {
+	pr.start = lpg.particles[lpg.anchors[ci]];
+	pr.end = lpg.particles[lpg.anchors[ci]];
+    }
+    else {
+	pr.start = lpg.particles[lpg.anchors[ci]];
+	pr.end = lpg.particles[lpg.anchors[ci+1]];
+    }
     return pr;
 }

@@ -14,6 +14,7 @@
   ORIGIN	  : Coordinates of grid origin (minimum-coordinate point of AABB).
   STEP		  : Grid consists of adjacent cubic cells with side length equal to STEP.
   X, Y, Z	  : Number of cells along axes x, y and z, respectively.
+  XSL, YSL, ZSL   : Segment lengths along each axis for load distribution among threads
   CELL_COUNT      : Total number of cells (X*Y*Z).
   PARTICLE_COUNT  : Total number of particles.
   MAP		  : Array map of linearized addresses (3D->1D by function LINEARIZE_ADDRESS)
@@ -36,6 +37,7 @@ struct lp_grid {
     btVector3 origin;
     float step;
     long x, y, z;
+    long xsl, ysl, zsl;
     long cell_count, particle_count;
     long* map;
     long* anchors;

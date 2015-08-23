@@ -32,31 +32,32 @@ float viscosity (float r, float h)
     return result;
 }
 
-int interactions_in_segment (int particles_per_thread, int segment,
-			     std::vector<particle>particles,
-			     float smoothing_length,
-			     std::vector<std::vector<interaction> > &interactions)
+int segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi,
+			  std::vector<std::vector<interaction> > &interactions)
 {
-    btVector3 posi;
-    btVector3 posj;
+    btVector3 pos0;
+    btVector3 pos1;
     btVector3 direction;
     btScalar distance;
     std::vector<interaction> segment_interactions;
-
-    int start_ind = particles_per_thread * segment;
-    int end_ind = ((particles_per_thread*(segment+1) < particles.size()) ?
-		   start_ind+particles_per_thread :
-		   particles.size());
-    for (int i=start_ind; i<end_ind; i++) {
-	posi = particle_position(particles[i]);
-	for (int j=i+1; j<particles.size(); j++) {
+    for (int i=xsi*lpg.xsl; i<(xsi+1)*lpg.xsl; i++) {
+	for (int j=ysi*lpg.ysl; i<(ysi+1)*lpg.ysl; i++) {
+	    for (int i=zsi*lpg.zsl; i<(zsi+1)*lpg.zsl; i++) {
+		particle_range cell = get_cell(lpg, i, j, k);
+	    }
+	}
+    }
+    
+    for (int p0i=start_ind; i<end_ind; i++) {
+	pos0 = particle_position(particles[i]);
+	for (int p1i=i+1; j<particles.size(); j++) {
 	    posj = particle_position(particles[j]);
 	    direction = posj-posi;
 	    distance = direction.length();
-	    if (distance < smoothing_length) {
+	    if (distance < lpg.step) {
 		interaction interaction;
-		interaction.i = i;
-		interaction.j = j;
+		interaction.p0 = i;
+		interaction.p1 = j;
 		interaction.distance = distance;
 		interaction.direction = direction.normalize();
 		segment_interactions.push_back(interaction);
