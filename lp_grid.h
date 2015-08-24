@@ -7,6 +7,8 @@
 #include "terrain.h"
 #include "fluid.h"
 
+typedef particle** anchor;
+
 /*
   Structure LP_GRID: Data structure to store pointers to the simulation particles,
   preserving locality between simulation and memory space.
@@ -23,7 +25,7 @@
   ANCHORS         : Array containing the cell ANCHORs, i.e. index of the first of cell
 		    particles in PARTICLES. ANCHORs correspond to cells in ascending linear
 		    order, so the relation A[i-1] <= A[i] holds for all elements of this 
-		    array. When CS[i-1]=CS[i], the cell corresponding to CS[i-1] contains
+		    array. When A[i-1]=A[i], the cell corresponding to A[i-1] contains
 		    no particles. This array has CELL_COUNT+1 elements, where the last
 		    anchor refers to a spare cell containing particles which are out of
 		    grid bounds (also serves for loop termination conditions).
@@ -44,19 +46,22 @@ struct lp_grid {
     particle** particles;
 };
 
+long linearize_address (lp_grid lpg, long i, long j, long k);
+
 lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles);
 
 int update_lp_grid (lp_grid lpg);
 
 /*
-  Structure PARTICLE_RANGE represents the contents of a cell, from
-  START (included) to END (not included -- first particle of next cell).
+  Structure CELL represents a cell as a range of consecutive pointers to its
+  particles, from START (included) to END (not included -- first particle of
+  next cell in spatial sort order).
 */
-struct particle_range {
-    particle* start;
-    particle* end;
+struct cell {
+    anchor start;
+    anchor end;
 };
 
-particle_range get_cell(lp_grid lpg, long i, long j, long k);
+cell get_cell(lp_grid lpg, long i, long j, long k);
 
 #endif

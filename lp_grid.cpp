@@ -140,17 +140,17 @@ int update_lp_grid (lp_grid lpg)
     return 0;
 }
 
-particle_range get_cell(lp_grid lpg, long i, long j, long k)
+cell get_cell(lp_grid lpg, long i, long j, long k)
 {
-    particle_range pr;
+    cell c;
     long ci = lpg.map[linearize_address(lpg, i, j, k)];
     if (ci == lpg.cell_count) {
-	pr.start = lpg.particles[lpg.anchors[ci]];
-	pr.end = lpg.particles[lpg.anchors[ci]];
+	c.start = &lpg.particles[lpg.anchors[ci]];
+	c.end = &lpg.particles[lpg.anchors[ci]];
     }
     else {
-	pr.start = lpg.particles[lpg.anchors[ci]];
-	pr.end = lpg.particles[lpg.anchors[ci+1]];
+	c.start = &lpg.particles[lpg.anchors[ci]];
+	c.end = &lpg.particles[lpg.anchors[ci+1]];
     }
-    return pr;
+    return c;
 }

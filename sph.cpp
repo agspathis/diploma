@@ -3,7 +3,6 @@
 
 #include "terrain.h"
 #include "sph.h"
-#include "lp_grid.h"
 #include "utilities.h"
 
 #define THREADS 100
@@ -32,41 +31,45 @@ float viscosity (float r, float h)
     return result;
 }
 
+int get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi, std::vector<particle*> &neighbours)
+{
+    return 0;
+}
+
 int segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi,
 			  std::vector<std::vector<interaction> > &interactions)
 {
-    btVector3 pos0;
-    btVector3 pos1;
-    btVector3 direction;
-    btScalar distance;
+    std::vector<particle> neighbours;
     std::vector<interaction> segment_interactions;
-    for (int i=xsi*lpg.xsl; i<(xsi+1)*lpg.xsl; i++) {
-	for (int j=ysi*lpg.ysl; i<(ysi+1)*lpg.ysl; i++) {
-	    for (int i=zsi*lpg.zsl; i<(zsi+1)*lpg.zsl; i++) {
-		particle_range cell = get_cell(lpg, i, j, k);
+    for (int xi=xsi*lpg.xsl; xi<(xsi+1)*lpg.xsl; xi++) {
+	for (int yi=ysi*lpg.ysl; yi<(ysi+1)*lpg.ysl; yi++) {
+	    for (int zi=zsi*lpg.zsl; zi<(zsi+1)*lpg.zsl; zi++) {
+		cell ccell = get_cell(lpg, xi, yi, zi);
+		get_neighbour_cells(lpg, xi, yi, zi, neighbours);
+		particle* cpp=ccpp.start; // cpp = center particle pointer
+		while (cpp < cell.end;) {
+		    btVector3 pos0 = particle_position(*cpp);
+		    // npi = neighbour particle index
+		    for (int npi=0; npi<neighbours.size(); npi++) {
+			btVector3 pos1 = particle_position(neighbours[npi]);
+			btVector3 direction = pos1-pos0;
+			btVector3 distance = direction.lenght();
+			if (distance < lpg.step) {
+			    interaction interaction;
+			    interaction.p0 = cpp;
+			    interaction.p1 = &neighbours[npi];
+			    interaction.distance = distance;
+			    interaction.direction = direction.normalize();
+			    segment_interactions.push_back(interaction);
+			}
+		    }
+		    cpp++;
+		}
+		neighbours.clear();
 	    }
 	}
     }
-    
-    for (int p0i=start_ind; i<end_ind; i++) {
-	pos0 = particle_position(particles[i]);
-	for (int p1i=i+1; j<particles.size(); j++) {
-	    posj = particle_position(particles[j]);
-	    direction = posj-posi;
-	    distance = direction.length();
-	    if (distance < lpg.step) {
-		interaction interaction;
-		interaction.p0 = i;
-		interaction.p1 = j;
-		interaction.distance = distance;
-		interaction.direction = direction.normalize();
-		segment_interactions.push_back(interaction);
-	    }
-	}
-    }
-
     interactions[segment] = segment_interactions;
-
     return 0;
 }
 
@@ -76,7 +79,7 @@ std::vector< std::vector<interaction> > collect_interactions_parallel(lp_grid lp
     std::vector< std::vector<interaction> > interactions (THREADS);
     std::vector< std::thread > threads (THREADS);
     for (int i=0; i<threads.size(); i++) {
-	threads[i] = std::thread (interactions_in_segment, particles_per_thread, i,
+	threads[i] = std::thread (segment_interactions, particles_per_thread, i,
 				  particles, smoothing_length, std::ref(interactions));
     }
     for (int i=0; i<threads.size(); i++) threads[i].join();
