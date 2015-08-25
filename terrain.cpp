@@ -59,7 +59,6 @@ btTriangleMesh* import_obj(const char* filename, aabb& aabb)
     aabb = read_obj(filename, vertices, faces);
     btTriangleMesh* triangleMesh = new btTriangleMesh();
     btVector3 f;
-    std::cout << faces.size() << "\n";
     for(int i=0; i<faces.size(); i++) {
 	f = faces[i];
 	triangleMesh->addTriangle(vertices[f.getX()], vertices[f.getY()], vertices[f.getZ()]);

@@ -16,7 +16,7 @@ typedef particle** anchor;
   ORIGIN	  : Coordinates of grid origin (minimum-coordinate point of AABB).
   STEP		  : Grid consists of adjacent cubic cells with side length equal to STEP.
   X, Y, Z	  : Number of cells along axes x, y and z, respectively.
-  XSL, YSL, ZSL   : Segment lengths along each axis for load distribution among threads
+  XSS, YSS, ZSS   : Segment sizes along each axis for load distribution among threads
   CELL_COUNT      : Total number of cells (X*Y*Z).
   PARTICLE_COUNT  : Total number of particles.
   MAP		  : Array map of linearized addresses (3D->1D by function LINEARIZE_ADDRESS)
@@ -39,23 +39,21 @@ struct lp_grid {
     btVector3 origin;
     float step;
     long x, y, z;
-    long xsl, ysl, zsl;
+    long xss, yss, zss;
     long cell_count, particle_count;
     long* map;
     long* anchors;
     particle** particles;
 };
 
-long linearize_address (lp_grid lpg, long i, long j, long k);
-
-lp_grid make_lp_grid (aabb domain, float step, std::vector<particle> particles);
+lp_grid make_lp_grid (aabb domain, float step, std::vector<particle*> particles);
 
 int update_lp_grid (lp_grid lpg);
 
 /*
-  Structure CELL represents a cell as a range of consecutive pointers to its
-  particles, from START (included) to END (not included -- first particle of
-  next cell in spatial sort order).
+  Structure CELL represents a cell as the range between a pair of pointers to
+  LPG.PARTICLES, from START (included -- anchor of this cell) to END (not
+  included -- anchor of next cell in spatial sort order).
 */
 struct cell {
     anchor start;

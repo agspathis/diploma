@@ -36,43 +36,41 @@ int main (void)
     t_ci.m_restitution = 1.0;
     btRigidBody* terrain = new btRigidBody(t_ci);
     dynamics_world->addRigidBody(terrain);
-
-    printf("min:%f %f %f\n", terrain_aabb.min.getX(), terrain_aabb.min.getY(), terrain_aabb.min.getZ());
-    printf("max:%f %f %f\n", terrain_aabb.max.getX(), terrain_aabb.max.getY(), terrain_aabb.max.getZ());
+    printf("Terrain AABB info:\n");
+    print_aabb(terrain_aabb);
+    printf("\n");
 
     // Particle construction
     aabb fluid_aabb;
     fluid_aabb.min = btVector3(-50, -50, -50);
     fluid_aabb.max = btVector3(50, 50, 50);
     btScalar particle_mass = 1.0;
-    btScalar particle_radius = 20.0;
+    btScalar particle_radius = 2.0;
     float smoothing_length = 4 * particle_radius;
-    std::vector<particle> particles = fluid_fill(terrain_aabb, particle_mass,
-						 particle_radius, dynamics_world);
-    printf("Particle count: %d\n", particles.size());
+    std::vector<particle*> particles =
+	fluid_fill(fluid_aabb, particle_mass, particle_radius, dynamics_world);
 
     // Grid construction
     btVector3 origin = btVector3(0, 0, 0);
     lp_grid lpg = make_lp_grid (terrain_aabb, smoothing_length, particles);
-    print_long_array(lpg.anchors, lpg.cell_count+1);
 
     // Simulation
     for (int i=0; i<STEPS; i++) {
 	// stepping
 	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
-	printf("%d\n", i);
+	printf("Frame %d\n", i);
 	// sph forces
 	apply_sph_forces(lpg, particle_mass);
 	// export to vtk
-	std::string filepath = "frames/frame"+std::to_string(i)+".vtk";
+	std::string filepath = "/home/agspathis/diplom/frames/frame"+std::to_string(i)+".vtk";
 	vtk_export((const char*) filepath.c_str(), particles);
     }
 
     // cleanup
     for (int i=0; i<particles.size(); i++) {
-    	dynamics_world->removeRigidBody(particles[i].rigid_body);
-    	delete particles[i].rigid_body->getMotionState();
-    	delete particles[i].rigid_body;
+    	dynamics_world->removeRigidBody(particles[i]->rigid_body);
+    	delete particles[i]->rigid_body->getMotionState();
+    	delete particles[i]->rigid_body;
     }
 
     dynamics_world->removeRigidBody(terrain);

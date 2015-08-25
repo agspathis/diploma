@@ -8,16 +8,16 @@ float rand_fb (float b)
     return static_cast <float> (rand()) / (static_cast <float> (RAND_MAX/b));
 }
 
-btVector3 particle_position (particle p)
+btVector3 particle_position (particle* pp)
 {
     btTransform tf;
-    p.rigid_body->getMotionState()->getWorldTransform(tf);
+    pp->rigid_body->getMotionState()->getWorldTransform(tf);
     return btVector3(tf.getOrigin().getX(), tf.getOrigin().getY(), tf.getOrigin().getZ());
 }
 
 
 // Export vector of particles to .vtk file
-int vtk_export (const char* filename, std::vector<particle> particles)
+int vtk_export (const char* filename, std::vector<particle*> particles)
 {
     int size = particles.size();
     std::ofstream vtk;
@@ -33,7 +33,7 @@ int vtk_export (const char* filename, std::vector<particle> particles)
     vtk << "POINTS " << size << " FLOAT\n";
     btTransform tf;
     for (int i=0; i < size; i++) {
-	particles[i].rigid_body->getMotionState()->getWorldTransform(tf);
+	particles[i]->rigid_body->getMotionState()->getWorldTransform(tf);
 	vtk << tf.getOrigin().getX() << " "
 	    << tf.getOrigin().getY() << " "
 	    << tf.getOrigin().getZ() << "\n";
@@ -51,6 +51,14 @@ int vtk_export (const char* filename, std::vector<particle> particles)
     vtk.close();
     return 0;
 }
+
+int print_aabb(aabb aabb)
+{
+    printf("min:%f %f %f\n", aabb.min.getX(), aabb.min.getY(), aabb.min.getZ());
+    printf("max:%f %f %f\n", aabb.max.getX(), aabb.max.getY(), aabb.max.getZ());
+    return 0;
+}
+
 
 int print_long_array(long* array, long count)
 {
