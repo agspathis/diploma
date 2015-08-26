@@ -64,7 +64,7 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, float step, std::vector<particl
 			    domain.min.getZ() - step/2);
 
     // Allocate memory for the 3 arrays
-    lpg->map	    = (long*) malloc(lpg->cell_count * sizeof(long));
+    lpg->map	    = (long*) malloc((lpg->cell_count+1) * sizeof(long));
     lpg->anchors    = (long*) malloc((lpg->cell_count+1) * sizeof(long));
     lpg->particles  = (particle**) malloc ((lpg->particle_count+1) * sizeof(particle*));
 
@@ -79,8 +79,8 @@ lp_grid make_lp_grid (aabb domain, float step, std::vector<particle*> particles)
     printf("LP grid info:\n");
     printf("x=%lu, y=%lu, z=%lu\n", lpg.x, lpg.y, lpg.z);
     printf("xss=%lu, yss=%lu, zss=%lu\n", lpg.xss, lpg.yss, lpg.zss);
-    printf("cell_count=%lu\n", lpg.cell_count);
-    printf("particle_count=%lu\n", lpg.particle_count);
+    printf("Cell count=%lu\n", lpg.cell_count);
+    printf("Particle count=%lu\n", lpg.particle_count);
     printf("\n");
 
     // Make points in centers of cells and spatially sort them
@@ -99,6 +99,7 @@ lp_grid make_lp_grid (aabb domain, float step, std::vector<particle*> particles)
     for (ci=0; ci<points.size(); ci++) {
 	lpg.map[linearize_address(lpg, points[ci].x(), points[ci].y(), points[ci].z())] = ci;
     }
+    lpg.map[lpg.cell_count] = lpg.cell_count;
 
     // Initialize ANCHORS to 0
     for (ci=0; ci<=lpg.cell_count; ci++) lpg.anchors[ci] = 0;
