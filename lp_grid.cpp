@@ -4,7 +4,6 @@
 #include <CGAL/spatial_sort.h>
 
 #include "lp_grid.h"
-#include "utilities.h"
 
 using CGAL::Cartesian;
 using CGAL::Point_3;

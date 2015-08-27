@@ -1,7 +1,7 @@
-#include <string>
 #include <iostream>
 
 #include "utilities.h"
+#include "output.h"
 #include "terrain.h"
 #include "fluid.h"
 #include "lp_grid.h"

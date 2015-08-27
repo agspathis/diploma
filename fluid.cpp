@@ -43,3 +43,10 @@ std::vector<particle*> fluid_fill(aabb aabb, btScalar particle_mass, btScalar pa
     }
     return particles;
 }
+
+btVector3 particle_position (particle* pp)
+{
+    btTransform tf;
+    pp->rigid_body->getMotionState()->getWorldTransform(tf);
+    return btVector3(tf.getOrigin().getX(), tf.getOrigin().getY(), tf.getOrigin().getZ());
+}

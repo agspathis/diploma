@@ -1,6 +1,3 @@
-#include <iostream>
-#include <cfloat>
-
 #include "terrain.h"
 
 // Read .obj file
@@ -18,7 +15,7 @@ aabb read_obj(const char* filename, std::vector<btVector3>& vertices, std::vecto
     char line[128];
     FILE* objfile;
     if (!(objfile = fopen(filename, "rt"))) {
-	std::cout << "file not found\n";
+	printf("file not found\n");
 	aabb.min = btVector3(0, 0, 0);
 	aabb.max = btVector3(0, 0, 0);
 	return aabb;

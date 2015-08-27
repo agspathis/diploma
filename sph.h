@@ -1,11 +1,6 @@
 #ifndef SPH_H
 #define SPH_H
 
-#include <vector>
-#include <btBulletDynamicsCommon.h>
-
-#include "fluid.h"
-#include "terrain.h"
 #include "lp_grid.h"
 
 struct interaction {

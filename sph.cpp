@@ -1,9 +1,6 @@
-#include <cmath>
 #include <thread>
 
-#include "terrain.h"
 #include "sph.h"
-#include "utilities.h"
 
 float poly_6 (float r, float h)
 {
@@ -78,7 +75,6 @@ int collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, lon
     for (long xi=ixi; xi<txi; xi++) 
 	for (long yi=iyi; yi<tyi; yi++) 
 	    for (long zi=izi; zi<tzi; zi++) {
-		// printf("%lu, %lu, %lu\n", xi, yi, zi);
 		cell ccell = get_cell(lpg, xi, yi, zi);
 		get_neighbour_cells(lpg, xi, yi, zi, neighbours);
 		anchor cca = ccell.start; // cca = center cell anchor

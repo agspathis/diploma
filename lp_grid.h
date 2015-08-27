@@ -1,10 +1,6 @@
 #ifndef LP_GRID_H
 #define LP_GRID_H
 
-#include <btBulletDynamicsCommon.h>
-#include <vector>
-
-#include "terrain.h"
 #include "fluid.h"
 
 typedef particle** anchor;
