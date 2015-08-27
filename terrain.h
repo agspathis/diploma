@@ -9,14 +9,18 @@ struct aabb {
     btVector3 max;
 };
 
-struct index3 {
-    int i, j, k;
+struct terrain {
+    long vertex_count;
+    long face_count;
+    aabb terrain_aabb;
+    btTriangleMesh* triangle_mesh;
+    btCollisionShape* shape;
+    btDefaultMotionState* motion_state;
+    btRigidBody* rigid_body;
 };
 
-// Read .obj file
-aabb read_obj(const char* filename, std::vector<btVector3>& vertices, std::vector<btVector3>& faces);
+terrain import_obj(char* filename);
 
-// Convert geometry from .obj to a triangular mesh
-btTriangleMesh* import_obj(const char* filename, aabb& aabb);
+int delete_terrain(terrain t);
 
 #endif

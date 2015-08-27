@@ -11,36 +11,24 @@
 #define STEPS 20
 
 // Global parameters
-const char* obj_filename = "/home/agspathis/diplom/models/obj/box.obj";
+char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";
 
 int main (void)
 {
-    // Construct dynamics world
+    // dynamics world construction
     btDefaultCollisionConfiguration* collision_configuration = new btDefaultCollisionConfiguration();
     btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_configuration);
     btBroadphaseInterface* broadphase = new btDbvtBroadphase();
     btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
     btDiscreteDynamicsWorld* dynamics_world =
 	new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
-
-    // Set dynamics world gravity
     dynamics_world->setGravity(btVector3(0, -9.81, 0));
 
-    // Terrain construction
-    aabb terrain_aabb;		// terrain AABB
-    btTriangleMesh* triangle_mesh = import_obj(obj_filename, terrain_aabb);
-    btCollisionShape* t_shape = new btBvhTriangleMeshShape(triangle_mesh,true);
-    btDefaultMotionState* t_motion_state =
-	new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
-    btRigidBody::btRigidBodyConstructionInfo t_ci(0, t_motion_state, t_shape, btVector3(0, 0, 0));
-    t_ci.m_restitution = 1.0;
-    btRigidBody* terrain = new btRigidBody(t_ci);
-    dynamics_world->addRigidBody(terrain);
-    printf("Terrain AABB info:\n");
-    print_aabb(terrain_aabb);
-    printf("\n");
+    // terrain construction
+    terrain terrain = import_obj(obj_filename);
+    dynamics_world->addRigidBody(terrain.rigid_body);
 
-    // Particle construction
+    // fluid construction
     aabb fluid_aabb;
     fluid_aabb.min = btVector3(-50, -50, -50);
     fluid_aabb.max = btVector3(50, 50, 50);
@@ -50,11 +38,11 @@ int main (void)
     std::vector<particle*> particles =
 	fluid_fill(fluid_aabb, particle_mass, particle_radius, dynamics_world);
 
-    // Grid construction
+    // grid construction
     btVector3 origin = btVector3(0, 0, 0);
-    lp_grid lpg = make_lp_grid (terrain_aabb, smoothing_length, particles);
+    lp_grid lpg = make_lp_grid (terrain.terrain_aabb, smoothing_length, particles);
 
-    // Simulation
+    // simulation
     for (int i=0; i<STEPS; i++) {
 	// stepping
 	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
@@ -73,11 +61,8 @@ int main (void)
     	delete particles[i]->rigid_body;
     }
 
-    dynamics_world->removeRigidBody(terrain);
-    delete t_shape;
-    delete triangle_mesh;
-    delete terrain->getMotionState();
-    delete terrain;
+    dynamics_world->removeRigidBody(terrain.rigid_body);
+    delete_terrain(terrain);
 
     delete dynamics_world;
     delete solver;

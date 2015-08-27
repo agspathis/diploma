@@ -1,7 +1,7 @@
+#include "utilities.h"
 #include "terrain.h"
 
-// Read .obj file
-aabb read_obj(const char* filename, std::vector<btVector3>& vertices, std::vector<btVector3>& faces)
+aabb read_obj(char* filename, std::vector<btVector3> &vertices, std::vector<btVector3> &faces)
 {
     aabb aabb;
     float x_min = +FLT_MAX;
@@ -11,7 +11,7 @@ aabb read_obj(const char* filename, std::vector<btVector3>& vertices, std::vecto
     float y_max = -FLT_MAX;
     float z_max = -FLT_MAX;
     float x, y, z;
-    int i, j, k;
+    long i, j, k;
     char line[128];
     FILE* objfile;
     if (!(objfile = fopen(filename, "rt"))) {
@@ -48,17 +48,42 @@ aabb read_obj(const char* filename, std::vector<btVector3>& vertices, std::vecto
     return aabb;
 }
 
-// Convert geometry from .obj to a triangular mesh
-btTriangleMesh* import_obj(const char* filename, aabb& aabb)
+// Import model from .obj file to a TERRAIN structure
+terrain import_obj(char* filename)
 {
+    terrain t;
     std::vector<btVector3> vertices;
     std::vector<btVector3> faces;
-    aabb = read_obj(filename, vertices, faces);
-    btTriangleMesh* triangleMesh = new btTriangleMesh();
-    btVector3 f;
-    for(int i=0; i<faces.size(); i++) {
-	f = faces[i];
-	triangleMesh->addTriangle(vertices[f.getX()], vertices[f.getY()], vertices[f.getZ()]);
-    }
-    return triangleMesh;
+    t.terrain_aabb = read_obj(filename, vertices, faces);
+    t.vertex_count = vertices.size();
+    t.face_count = faces.size();
+    t.triangle_mesh = new btTriangleMesh();
+    for(long fi=0; fi<faces.size(); fi++)
+	t.triangle_mesh->addTriangle(vertices[faces[fi].getX()],
+				     vertices[faces[fi].getY()],
+				     vertices[faces[fi].getZ()]);
+
+    // construct rigid body for simulation
+    t.shape = new btBvhTriangleMeshShape(t.triangle_mesh,true);
+    t.motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1),
+							  btVector3(0, 0, 0)));
+    btRigidBody::btRigidBodyConstructionInfo t_ci(0, t.motion_state, t.shape, btVector3(0, 0, 0));
+    t_ci.m_restitution = 1.0;
+    t.rigid_body = new btRigidBody(t_ci);
+
+    // print terrain aabb
+    printf("Terrain AABB info:\n");
+    print_aabb(t.terrain_aabb);
+    printf("\n");
+
+    return t;
+}
+
+int delete_terrain(terrain t)
+{
+    delete t.shape;
+    delete t.triangle_mesh;
+    delete t.motion_state;
+    delete t.rigid_body;
+    return 0;
 }
