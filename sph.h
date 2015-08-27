@@ -18,6 +18,6 @@ struct interaction {
 
 float kernel(float r, float h);
 
-int apply_sph_forces(lp_grid lpg, btScalar particle_mass);
+int apply_sph(lp_grid lpg, btScalar particle_mass);
 
 #endif

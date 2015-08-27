@@ -64,8 +64,8 @@ int get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi, std::vector<part
     return 0;
 }
 
-int segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, long sii,
-			  std::vector<std::vector<interaction> > &interactions)
+int collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, long sii,
+				  std::vector< std::vector<interaction> > &interactions)
 {
     long ixi = xsi*lpg.xss;
     long iyi = ysi*lpg.yss;
@@ -106,41 +106,74 @@ int segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, long sii,
     return 0;
 }
 
-std::vector< std::vector<interaction> > collect_interactions(lp_grid lpg)
+// The grid gets divided into segments (of dimensions LPG.XSS * LPG.YSS *
+// LPG.ZSS cells) each of which is assigned to a separate thread for particle
+// interaction scan. Each slot of vector SEGMENT_INTERACTIONS contains a vector
+// with the interactions scanned in a segment. This vector is then flattened and
+// returned.
+std::vector<interaction> collect_interactions(lp_grid lpg)
 {
     long xs_count = 1+lpg.x/lpg.xss;
     long ys_count = 1+lpg.y/lpg.yss;
     long zs_count = 1+lpg.z/lpg.zss;
     long thread_count = xs_count*ys_count*zs_count;
     std::vector< std::thread > threads (thread_count);
-    std::vector< std::vector<interaction> > interactions (thread_count);
+    std::vector< std::vector<interaction> > segment_interactions (thread_count);
     long sii=0;			// sii = segment interactions index
     for (long xsi=0; xsi<xs_count; xsi++)
 	for (long ysi=0; ysi<ys_count; ysi++)
 	    for (long zsi=0; zsi<zs_count; zsi++, sii++)
-		threads[sii] = std::thread (segment_interactions, lpg, xsi, ysi, zsi, sii,
-					    std::ref(interactions));
+		threads[sii] = std::thread (collect_segment_interactions, lpg, xsi, ysi, zsi, sii,
+					    std::ref(segment_interactions));
     for (long ti=0; ti<thread_count; ti++) threads[ti].join();
-    // DEBUG START
-    int interaction_count=0;
-    for (long icc=0; icc<interactions.size(); icc++)
-	interaction_count += interactions[icc].size();
-    printf("Found %lu interactions\n", interaction_count);
-    // DEBUG END
+    // flatten interaction vector
+    long ic=0;			// interaction count
+    for(sii=0; sii<segment_interactions.size(); sii++)
+	ic += segment_interactions[sii].size();
+    std::vector<interaction> interactions (ic);
+    long fii=0;			// flat interactions index
+    for(sii=0; sii<segment_interactions.size(); sii++)
+    	for(long ii=0; ii<segment_interactions[sii].size(); ii++, fii++)
+    	    interactions[fii] = segment_interactions[sii][ii];
     return interactions;
 }
 
-int apply_interactions (std::vector< std::vector<interaction> > interactions,
-			float smoothing_length,
-			btScalar particle_mass)
+int compute_densities(std::vector<interaction> interactions, float smoothing_length)
+{
+    for(long ii=0; ii<interactions.size(); ii++) {
+	float density_fraction = poly_6(interactions[ii].distance, smoothing_length);
+	(*interactions[ii].p0).samples++;
+	(*interactions[ii].p0).density += density_fraction;
+	(*interactions[ii].p1).samples++;
+	(*interactions[ii].p1).density += density_fraction;
+    }
+    return 0;
+}
+
+int compute_pressures(particle** particles, long particle_count)
+{
+    // for(long ppi=0; ppi<particle_count; ppi++)
+    // 	(*particles[ppi]).pressure = eos((*particles[ppi]).density);
+    return 0;
+}
+
+int compute_forces(std::vector<interaction> interactions)
 {
     return 0;
 }
 
-int apply_sph_forces(lp_grid lpg, btScalar particle_mass)
+int apply_forces(std::vector<interaction> interactions, particle** particles)
+{
+    return 0;
+}
+
+int apply_sph(lp_grid lpg, btScalar particle_mass)
 {
     clear_particle_data(lpg);
-    std::vector<std::vector<interaction> > interactions = collect_interactions(lpg);
-    apply_interactions(interactions, lpg.step, particle_mass);
+    std::vector<interaction> interactions = collect_interactions(lpg);
+    compute_densities(interactions, lpg.step);
+    compute_pressures(lpg.particles, lpg.particle_count);
+    compute_forces(interactions);
+    apply_forces(interactions, lpg.particles);
     return 0;
 }

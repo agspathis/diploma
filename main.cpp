@@ -59,8 +59,8 @@ int main (void)
 	// stepping
 	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
 	printf("Frame %d\n", i);
-	// sph forces
-	apply_sph_forces(lpg, particle_mass);
+	// sph
+	apply_sph(lpg, particle_mass);
 	// export to vtk
 	std::string filepath = "/home/agspathis/diplom/frames/frame"+std::to_string(i)+".vtk";
 	vtk_export((const char*) filepath.c_str(), particles);
