@@ -8,7 +8,7 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 10
+#define STEPS 20
 
 // Global parameters
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";
@@ -32,15 +32,13 @@ int main (void)
     aabb fluid_aabb;
     fluid_aabb.min = btVector3(-50, -50, -50);
     fluid_aabb.max = btVector3(50, 50, 50);
-    btScalar particle_mass = 1.0;
-    btScalar particle_radius = 3.0;
-    float smoothing_length = 4 * particle_radius;
-    std::vector<particle*> particles =
-	fluid_fill(fluid_aabb, particle_mass, particle_radius, dynamics_world);
+    fluid fluid = make_fluid(fluid_aabb, 25000);
+    for (long pi=0; pi<fluid.particle_count; pi++)
+	dynamics_world->addRigidBody(fluid.particles[pi]->rigid_body);
 
     // grid construction
     btVector3 origin = btVector3(0, 0, 0);
-    lp_grid lpg = make_lp_grid (terrain.taabb, smoothing_length, particles);
+    lp_grid lpg = make_lp_grid (terrain.taabb, fluid);
 
     // simulation
     for (int i=0; i<STEPS; i++) {
@@ -48,21 +46,19 @@ int main (void)
 	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
 	printf("Frame %d\n", i);
 	// sph
-	apply_sph(lpg, particle_mass);
+	apply_sph(lpg, fluid);
 	// export to vtk
 	std::string filepath = "/home/agspathis/diplom/frames/frame"+std::to_string(i)+".vtk";
-	vtk_export((const char*) filepath.c_str(), particles);
+	vtk_export_particles((char*) filepath.c_str(), fluid);
     }
 
     // cleanup
-    for (int i=0; i<particles.size(); i++) {
-    	dynamics_world->removeRigidBody(particles[i]->rigid_body);
-    	delete particles[i]->rigid_body->getMotionState();
-    	delete particles[i]->rigid_body;
-    }
-
     dynamics_world->removeRigidBody(terrain.rigid_body);
     delete_terrain(terrain);
+
+    for (long pi=0; pi<fluid.particle_count; pi++)
+	dynamics_world->removeRigidBody(fluid.particles[pi]->rigid_body);
+    delete_fluid(fluid);
 
     delete dynamics_world;
     delete solver;

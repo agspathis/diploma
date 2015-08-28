@@ -14,9 +14,10 @@ struct terrain {
     aabb taabb;
     btTriangleMesh* triangle_mesh;
     btCollisionShape* shape;
-    btDefaultMotionState* motion_state;
     btRigidBody* rigid_body;
 };
+
+float aabb_volume(aabb aabb);
 
 terrain make_terrain_obj(char* filename);
 

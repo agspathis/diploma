@@ -2,9 +2,9 @@
 
 #include "output.h"
 
-int vtk_export (const char* filename, std::vector<particle*> particles)
+int vtk_export_particles (char* filename, fluid fluid)
 {
-    int size = particles.size();
+    int size = fluid.particle_count;
     std::ofstream vtk;
     vtk.open(filename);
 
@@ -18,7 +18,7 @@ int vtk_export (const char* filename, std::vector<particle*> particles)
     vtk << "POINTS " << size << " FLOAT\n";
     btTransform tf;
     for (int i=0; i < size; i++) {
-	particles[i]->rigid_body->getMotionState()->getWorldTransform(tf);
+	fluid.particles[i]->rigid_body->getMotionState()->getWorldTransform(tf);
 	vtk << tf.getOrigin().getX() << " "
 	    << tf.getOrigin().getY() << " "
 	    << tf.getOrigin().getZ() << "\n";

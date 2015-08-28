@@ -1,4 +1,5 @@
 #include <thread>
+#include <vector>
 
 #include "sph.h"
 
@@ -134,10 +135,10 @@ std::vector<interaction> collect_interactions(lp_grid lpg)
     return interactions;
 }
 
-int compute_densities(std::vector<interaction> interactions, float smoothing_length)
+int compute_densities(std::vector<interaction> interactions, float smoothing_radius)
 {
     for(long ii=0; ii<interactions.size(); ii++) {
-	float density_fraction = poly_6(interactions[ii].distance, smoothing_length);
+	float density_fraction = poly_6(interactions[ii].distance, smoothing_radius);
 	(*interactions[ii].p0).samples++;
 	(*interactions[ii].p0).density += density_fraction;
 	(*interactions[ii].p1).samples++;
@@ -163,7 +164,7 @@ int apply_forces(std::vector<interaction> interactions, particle** particles)
     return 0;
 }
 
-int apply_sph(lp_grid lpg, btScalar particle_mass)
+int apply_sph(lp_grid lpg, fluid fluid)
 {
     clear_particle_data(lpg);
     std::vector<interaction> interactions = collect_interactions(lpg);

@@ -98,10 +98,10 @@ terrain make_terrain_obj(char* filename)
 
     // construct rigid body for simulation
     t.shape = new btBvhTriangleMeshShape(t.triangle_mesh,true);
-    t.motion_state = new btDefaultMotionState
+    btDefaultMotionState* t_motion_state = new btDefaultMotionState
 	(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     btRigidBody::btRigidBodyConstructionInfo t_ci
-	(0, t.motion_state, t.shape, btVector3(0, 0, 0));
+	(0, t_motion_state, t.shape, btVector3(0, 0, 0));
     t_ci.m_restitution = 1.0;
     t.rigid_body = new btRigidBody(t_ci);
 
@@ -118,7 +118,13 @@ int delete_terrain(terrain t)
 {
     delete t.shape;
     delete t.triangle_mesh;
-    delete t.motion_state;
+    delete t.rigid_body->getMotionState();
     delete t.rigid_body;
     return 0;
+}
+
+float aabb_volume(aabb aabb)
+{
+    aabb.max -= aabb.min;
+    return (aabb.max.getX() * aabb.max.getY() * aabb.max.getZ());
 }

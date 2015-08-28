@@ -42,7 +42,7 @@ struct lp_grid {
     particle** particles;
 };
 
-lp_grid make_lp_grid (aabb domain, float step, std::vector<particle*> particles);
+lp_grid make_lp_grid (aabb domain, fluid fluid);
 
 int update_lp_grid (lp_grid lpg);
 

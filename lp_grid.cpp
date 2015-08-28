@@ -47,20 +47,20 @@ int insert_particle(lp_grid lpg, particle* pp)
     return 0;
 }
 
-int allocate_lp_grid (lp_grid* lpg, aabb domain, float step, std::vector<particle*> particles)
+int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
 {
-    lpg->step = step;
-    lpg->particle_count = particles.size();
-    lpg->x = ceil((domain.max.getX() - domain.min.getX()) / step)+1;
-    lpg->y = ceil((domain.max.getY() - domain.min.getY()) / step)+1;
-    lpg->z = ceil((domain.max.getZ() - domain.min.getZ()) / step)+1;
+    lpg->step = fluid.smoothing_radius;
+    lpg->particle_count = fluid.particle_count;
+    lpg->x = ceil((domain.max.getX() - domain.min.getX()) / lpg->step)+1;
+    lpg->y = ceil((domain.max.getY() - domain.min.getY()) / lpg->step)+1;
+    lpg->z = ceil((domain.max.getZ() - domain.min.getZ()) / lpg->step)+1;
     lpg->xss = ceil(sqrt(lpg->x));
     lpg->yss = ceil(sqrt(lpg->y));
     lpg->zss = ceil(sqrt(lpg->z));
     lpg->cell_count = lpg->x * lpg->y * lpg->z;
-    lpg->origin = btVector3(domain.min.getX() - step/2,
-			    domain.min.getY() - step/2,
-			    domain.min.getZ() - step/2);
+    lpg->origin = btVector3(domain.min.getX() - lpg->step/2,
+			    domain.min.getY() - lpg->step/2,
+			    domain.min.getZ() - lpg->step/2);
 
     // Allocate memory for the 3 arrays
     lpg->map	    = (long*) malloc((lpg->cell_count+1) * sizeof(long));
@@ -70,11 +70,11 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, float step, std::vector<particl
     return 0;
 }
 
-lp_grid make_lp_grid (aabb domain, float step, std::vector<particle*> particles)
+lp_grid make_lp_grid (aabb domain, fluid fluid)
 {
     // Grid parameter initialization/allocation
     lp_grid lpg; long i,j,k;
-    allocate_lp_grid(&lpg, domain, step, particles);
+    allocate_lp_grid(&lpg, domain, fluid);
     printf("LP grid info:\n");
     printf("x=%lu, y=%lu, z=%lu\n", lpg.x, lpg.y, lpg.z);
     printf("xss=%lu, yss=%lu, zss=%lu\n", lpg.xss, lpg.yss, lpg.zss);
@@ -104,7 +104,7 @@ lp_grid make_lp_grid (aabb domain, float step, std::vector<particle*> particles)
     for (ci=0; ci<=lpg.cell_count; ci++) lpg.anchors[ci] = 0;
 
     // Populate PARTICLES
-    for (long pi=0; pi<lpg.particle_count; pi++) insert_particle(lpg, particles[pi]);
+    for (long pi=0; pi<lpg.particle_count; pi++) insert_particle(lpg, fluid.particles[pi]);
 
     return lpg;
 }
