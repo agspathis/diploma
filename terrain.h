@@ -1,7 +1,6 @@
 #ifndef TERRAIN_H
 #define TERRAIN_H
 
-#include <vector>
 #include <btBulletDynamicsCommon.h>
 
 struct aabb {
@@ -12,14 +11,14 @@ struct aabb {
 struct terrain {
     long vertex_count;
     long face_count;
-    aabb terrain_aabb;
+    aabb taabb;
     btTriangleMesh* triangle_mesh;
     btCollisionShape* shape;
     btDefaultMotionState* motion_state;
     btRigidBody* rigid_body;
 };
 
-terrain import_obj(char* filename);
+terrain make_terrain_obj(char* filename);
 
 int delete_terrain(terrain t);
 

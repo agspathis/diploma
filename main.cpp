@@ -8,7 +8,7 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 20
+#define STEPS 10
 
 // Global parameters
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";
@@ -25,7 +25,7 @@ int main (void)
     dynamics_world->setGravity(btVector3(0, -9.81, 0));
 
     // terrain construction
-    terrain terrain = import_obj(obj_filename);
+    terrain terrain = make_terrain_obj(obj_filename);
     dynamics_world->addRigidBody(terrain.rigid_body);
 
     // fluid construction
@@ -33,14 +33,14 @@ int main (void)
     fluid_aabb.min = btVector3(-50, -50, -50);
     fluid_aabb.max = btVector3(50, 50, 50);
     btScalar particle_mass = 1.0;
-    btScalar particle_radius = 2.0;
+    btScalar particle_radius = 3.0;
     float smoothing_length = 4 * particle_radius;
     std::vector<particle*> particles =
 	fluid_fill(fluid_aabb, particle_mass, particle_radius, dynamics_world);
 
     // grid construction
     btVector3 origin = btVector3(0, 0, 0);
-    lp_grid lpg = make_lp_grid (terrain.terrain_aabb, smoothing_length, particles);
+    lp_grid lpg = make_lp_grid (terrain.taabb, smoothing_length, particles);
 
     // simulation
     for (int i=0; i<STEPS; i++) {

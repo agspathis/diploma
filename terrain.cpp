@@ -1,30 +1,62 @@
 #include "utilities.h"
 #include "terrain.h"
 
-aabb read_obj(char* filename, std::vector<btVector3> &vertices, std::vector<btVector3> &faces)
+struct face {
+    long v0i, v1i, v2i;
+};
+
+struct model {
+    long vertex_count;
+    long face_count;
+    btVector3* vertices;
+    face* faces;
+    aabb maabb;
+};
+
+int delete_model(model m)
 {
-    aabb aabb;
-    float x_min = +FLT_MAX;
-    float y_min = +FLT_MAX;
-    float z_min = +FLT_MAX;
-    float x_max = -FLT_MAX;
-    float y_max = -FLT_MAX;
-    float z_max = -FLT_MAX;
-    float x, y, z;
-    long i, j, k;
+    free(m.vertices);
+    free(m.faces);
+    return 0;
+}
+
+model read_obj(char* filename)
+{
+    model m;
+    float x_min = +FLT_MAX, y_min = +FLT_MAX, z_min = +FLT_MAX;
+    float x_max = -FLT_MAX, y_max = -FLT_MAX, z_max = -FLT_MAX;
+    float x, y, z;		// vertex coordinates
+    long i, j, k;		// face vertex indices
+    long vertex_count=0, face_count=0;
     char line[128];
-    FILE* objfile;
-    if (!(objfile = fopen(filename, "rt"))) {
+    FILE* obj_file;
+
+    if (!(obj_file = fopen(filename, "rt"))) {
 	printf("file not found\n");
-	aabb.min = btVector3(0, 0, 0);
-	aabb.max = btVector3(0, 0, 0);
-	return aabb;
+	m.maabb.min = btVector3(0, 0, 0);
+	m.maabb.max = btVector3(0, 0, 0);
+	return m;
     }
-    while (fgets(line, 128, objfile)) {
+    // count vertices, faces
+    while (fgets(line, 128, obj_file)) {
+	switch (line[0]) {
+	case 'v': vertex_count++; break;
+	case 'f': face_count++; break;
+	default: continue;
+	};
+    }
+    m.vertices = (btVector3*) malloc(vertex_count * sizeof(btVector3));
+    m.faces = (face*) malloc(face_count * sizeof(face));
+    m.vertex_count = vertex_count;
+    m.face_count = face_count;
+
+    vertex_count = face_count = 0;
+    rewind(obj_file);
+    while (fgets(line, 128, obj_file)) {
 	switch (line[0]) {
 	case 'v':
 	    sscanf(&line[1],"%f %f %f", &x, &y, &z);
-	    vertices.push_back(btVector3(x, y, z));
+	    m.vertices[vertex_count++] = btVector3(x, y, z);
 	    if (x < x_min) x_min = x;
 	    if (y < y_min) y_min = y;
 	    if (z < z_min) z_min = z;
@@ -34,48 +66,51 @@ aabb read_obj(char* filename, std::vector<btVector3> &vertices, std::vector<btVe
 	    break;
 	case 'f':
 	    sscanf(&line[1],"%d %d %d", &i, &j, &k);
-	    faces.push_back(btVector3(--i, --j, --k));
+	    m.faces[face_count].v0i = i-1;
+	    m.faces[face_count].v1i = j-1;
+	    m.faces[face_count].v2i = k-1;
+	    face_count++;
 	    break;
 	default:
 	    continue;
 	};
     }
-    fclose(objfile);
+    fclose(obj_file);
 
-    aabb.min = btVector3(x_min, y_min, z_min);
-    aabb.max = btVector3(x_max, y_max, z_max);
+    m.maabb.min = btVector3(x_min, y_min, z_min);
+    m.maabb.max = btVector3(x_max, y_max, z_max);
 
-    return aabb;
+    return m;
 }
 
-// Import model from .obj file to a TERRAIN structure
-terrain import_obj(char* filename)
+terrain make_terrain_obj(char* filename)
 {
     terrain t;
-    std::vector<btVector3> vertices;
-    std::vector<btVector3> faces;
-    t.terrain_aabb = read_obj(filename, vertices, faces);
-    t.vertex_count = vertices.size();
-    t.face_count = faces.size();
+    model m = read_obj(filename);
+    t.taabb = m.maabb;
     t.triangle_mesh = new btTriangleMesh();
-    for(long fi=0; fi<faces.size(); fi++)
-	t.triangle_mesh->addTriangle(vertices[faces[fi].getX()],
-				     vertices[faces[fi].getY()],
-				     vertices[faces[fi].getZ()]);
+    for(long fi=0; fi<m.face_count; fi++) {
+	face f = m.faces[fi];
+	t.triangle_mesh->addTriangle(m.vertices[f.v0i],
+				     m.vertices[f.v1i],
+				     m.vertices[f.v2i]);
+    }
 
     // construct rigid body for simulation
     t.shape = new btBvhTriangleMeshShape(t.triangle_mesh,true);
-    t.motion_state = new btDefaultMotionState(btTransform(btQuaternion(0, 0, 0, 1),
-							  btVector3(0, 0, 0)));
-    btRigidBody::btRigidBodyConstructionInfo t_ci(0, t.motion_state, t.shape, btVector3(0, 0, 0));
+    t.motion_state = new btDefaultMotionState
+	(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
+    btRigidBody::btRigidBodyConstructionInfo t_ci
+	(0, t.motion_state, t.shape, btVector3(0, 0, 0));
     t_ci.m_restitution = 1.0;
     t.rigid_body = new btRigidBody(t_ci);
 
     // print terrain aabb
     printf("Terrain AABB info:\n");
-    print_aabb(t.terrain_aabb);
+    print_aabb(t.taabb);
     printf("\n");
 
+    delete_model(m);
     return t;
 }
 
