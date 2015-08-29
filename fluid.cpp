@@ -21,6 +21,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     // values for water
     f.density = 1000;
     f.dynamic_viscosity = 0.001;
+    f.tait_b = 10000;
 
     // particle counting
     float x, y, z;
@@ -35,26 +36,24 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     // F.SMOOTHING_RADIUS for about 50 smoothing samples
     f.smoothing_radius = 4.2 * f.particle_radius;
     f.sample_density = f.density / f.particle_mass;
-    f.particles = (particle**) malloc(f.particle_count * sizeof(particle));
+    f.particles = (particle*) malloc(f.particle_count * sizeof(particle));
 
     // particle construction
     pi = 0;			// pi = particle index
     btVector3 fp_inertia(0, 0, 0);
-    btCollisionShape* fp_shape = new btSphereShape(f.particle_radius);
-    fp_shape->calculateLocalInertia(f.particle_mass, fp_inertia);
+    f.fp_shape = new btSphereShape(f.particle_radius);
+    f.fp_shape->calculateLocalInertia(f.particle_mass, fp_inertia);
     for (k=0; (z = 1.633 * k * f.particle_radius) < dz; k++)
 	for (j=0; (y = (j + (k%2)/3.0) * 1.732 * f.particle_radius) < dy; j++)
-	    for (i=0; (x = (2*i + ((j+k)%2)) * f.particle_radius) < dx; i++) {
+	    for (i=0; (x = (2*i + ((j+k)%2)) * f.particle_radius) < dx; i++, pi++) {
 		btDefaultMotionState* fp_motion_state = new btDefaultMotionState
 		    (btTransform(btQuaternion(0, 0, 0, 1), btVector3(x_min+x, y_min+y, z_min+z)));
 		btRigidBody::btRigidBodyConstructionInfo fp_ci
-		    (f.particle_mass, fp_motion_state, fp_shape, fp_inertia);
+		    (f.particle_mass, fp_motion_state, f.fp_shape, fp_inertia);
 		fp_ci.m_restitution = 1.0;
-		particle* p = (particle*) malloc(sizeof(particle*));
-		p->rigid_body = new btRigidBody(fp_ci);
-		p->rigid_body->setLinearVelocity(btVector3(0, 0, 0));
-		p->rigid_body->setAngularFactor(btVector3(0, 0, 0));
-		f.particles[pi++] = p;
+		f.particles[pi].rigid_body = new btRigidBody(fp_ci);
+		f.particles[pi].rigid_body->setLinearVelocity(btVector3(0, 0, 0));
+		f.particles[pi].rigid_body->setAngularFactor(btVector3(0, 0, 0));
 	    }
     return f;
 }
@@ -69,8 +68,7 @@ int delete_particle(particle* pp)
 
 int delete_fluid(fluid fluid)
 {
-    for (long pi=0; pi<fluid.particle_count; pi++)
-	delete_particle(fluid.particles[pi]);
+    delete fluid.fp_shape;
     free(fluid.particles);
     return 0;
 }
@@ -80,4 +78,9 @@ btVector3 particle_position (particle* pp)
     btTransform tf;
     pp->rigid_body->getMotionState()->getWorldTransform(tf);
     return btVector3(tf.getOrigin().getX(), tf.getOrigin().getY(), tf.getOrigin().getZ());
+}
+
+btVector3 particle_velocity (particle* pp)
+{
+    return pp->rigid_body->getLinearVelocity();
 }

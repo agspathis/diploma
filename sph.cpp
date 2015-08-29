@@ -27,12 +27,20 @@ float viscosity (float r, float h)
     return result;
 }
 
+float eos (float density, fluid fluid)
+{
+    return fluid.tait_b * (pow((density * fluid.particle_mass) / fluid.density, 7) - 1);
+}
+
 int clear_particle_data(lp_grid lpg)
 {
     for (long pi=0; pi<lpg.particle_count; pi++) {
-	lpg.particles[pi]->samples = 0;
-	lpg.particles[pi]->density = 0;
-	lpg.particles[pi]->pressure = 0;
+	particle* pp = lpg.particles[pi];
+	pp->samples = 0;
+	pp->density = 0;
+	pp->pressure = 0;
+	pp->p_d2 = 0;
+	pp->force = btVector3(0, 0, 0);
     }
     return 0;
 }
@@ -40,7 +48,7 @@ int clear_particle_data(lp_grid lpg)
 int get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi, std::vector<particle*> &neighbours)
 {
     // scan only half of surrounding cells to avoid duplication of work
-    std::vector<cell> neighbour_cells(13);
+    cell neighbour_cells[13];
     neighbour_cells[ 0] = get_cell(lpg, xi-1, yi-1, zi-1);
     neighbour_cells[ 1] = get_cell(lpg, xi  , yi-1, zi-1);
     neighbour_cells[ 2] = get_cell(lpg, xi+1, yi-1, zi-1);
@@ -127,6 +135,7 @@ std::vector<interaction> collect_interactions(lp_grid lpg)
     long ic=0;			// interaction count
     for(sii=0; sii<segment_interactions.size(); sii++)
 	ic += segment_interactions[sii].size();
+    printf("Found %lu interactions\n", ic);
     std::vector<interaction> interactions (ic);
     long fii=0;			// flat interactions index
     for(sii=0; sii<segment_interactions.size(); sii++)
@@ -147,20 +156,31 @@ int compute_densities(std::vector<interaction> interactions, float smoothing_rad
     return 0;
 }
 
-int compute_pressures(particle** particles, long particle_count)
+// compute pressures from EOS and pressure/density^2 for each particle
+int compute_pressures(fluid fluid)
 {
-    // for(long ppi=0; ppi<particle_count; ppi++)
-    // 	(*particles[ppi]).pressure = eos((*particles[ppi]).density);
+    for(long ppi=0; ppi<fluid.particle_count; ppi++) {
+	particle* pp = fluid.particles+ppi;
+    	pp->pressure = eos(pp->density, fluid);
+	pp->p_d2 = pp->pressure / pow(pp->density, 2);
+    }
     return 0;
 }
 
-int compute_forces(std::vector<interaction> interactions)
+// forces arise from pressure difference and viscosity
+int compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
 {
-    return 0;
-}
-
-int apply_forces(std::vector<interaction> interactions, particle** particles)
-{
+    for (long ii=0; ii<interactions.size(); ii++) {
+	interaction i = interactions[ii];
+	float pf = (i.p0->p_d2 + i.p1->p_d2) * spiky(i.distance, fluid.smoothing_radius);
+	btVector3 dir = i.direction;
+	i.p0->force += (dir *= pf);
+	i.p1->force -= dir;
+    }
+    for (long pi=0; pi<fluid.particle_count; pi++) {
+	particle* pp = fluid.particles+pi;
+	pp->rigid_body->applyCentralForce(pp->force);
+    }
     return 0;
 }
 
@@ -169,8 +189,7 @@ int apply_sph(lp_grid lpg, fluid fluid)
     clear_particle_data(lpg);
     std::vector<interaction> interactions = collect_interactions(lpg);
     compute_densities(interactions, lpg.step);
-    compute_pressures(lpg.particles, lpg.particle_count);
-    compute_forces(interactions);
-    apply_forces(interactions, lpg.particles);
+    compute_pressures(fluid);
+    compute_apply_forces(interactions, fluid);
     return 0;
 }

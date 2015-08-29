@@ -97,7 +97,7 @@ terrain make_terrain_obj(char* filename)
     }
 
     // construct rigid body for simulation
-    t.shape = new btBvhTriangleMeshShape(t.triangle_mesh,true);
+    t.shape = new btBvhTriangleMeshShape(t.triangle_mesh, true);
     btDefaultMotionState* t_motion_state = new btDefaultMotionState
 	(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     btRigidBody::btRigidBodyConstructionInfo t_ci

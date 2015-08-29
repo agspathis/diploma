@@ -11,8 +11,6 @@ struct interaction {
     btScalar force;
 };
 
-float kernel(float r, float h);
-
 int apply_sph(lp_grid lpg, fluid fluid);
 
 #endif

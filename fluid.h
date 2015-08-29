@@ -7,6 +7,8 @@ struct particle {
     int samples;
     float density;
     float pressure;
+    float p_d2;
+    btVector3 force;
     btRigidBody* rigid_body;
 };
 
@@ -20,8 +22,10 @@ struct fluid {
     long particle_count;
     float density;
     float sample_density;
+    float tait_b;
     float smoothing_radius;
-    particle** particles;
+    btCollisionShape* fp_shape;
+    particle* particles;
     float dynamic_viscosity;
 };
 

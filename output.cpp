@@ -16,12 +16,9 @@ int vtk_export_particles (char* filename, fluid fluid)
 
     // point location
     vtk << "POINTS " << size << " FLOAT\n";
-    btTransform tf;
-    for (int i=0; i < size; i++) {
-	fluid.particles[i]->rigid_body->getMotionState()->getWorldTransform(tf);
-	vtk << tf.getOrigin().getX() << " "
-	    << tf.getOrigin().getY() << " "
-	    << tf.getOrigin().getZ() << "\n";
+    for (long i=0; i<size; i++) {
+	btVector3 position = particle_position(fluid.particles+i);
+	vtk << position.getX() << " " << position.getY() << " " << position.getZ() << "\n";
     }
     vtk << "\n";
 

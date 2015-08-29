@@ -104,7 +104,9 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
     for (ci=0; ci<=lpg.cell_count; ci++) lpg.anchors[ci] = 0;
 
     // Populate PARTICLES
-    for (long pi=0; pi<lpg.particle_count; pi++) insert_particle(lpg, fluid.particles[pi]);
+    // for (long pi=0; pi<lpg.particle_count; pi++) insert_particle(lpg, fluid.particles + pi);
+    for (particle* pp=fluid.particles; pp<fluid.particles+lpg.particle_count; pp++)
+	insert_particle(lpg, pp);
 
     return lpg;
 }
@@ -143,6 +145,14 @@ int update_lp_grid (lp_grid lpg)
 	    move_particle(lpg, ipi, ici, tci);
 	}
     }
+    return 0;
+}
+
+int delete_lp_grid(lp_grid lpg)
+{
+    free(lpg.map);
+    free(lpg.anchors);
+    free(lpg.particles);
     return 0;
 }
 

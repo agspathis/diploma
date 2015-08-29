@@ -42,9 +42,11 @@ struct lp_grid {
     particle** particles;
 };
 
-lp_grid make_lp_grid (aabb domain, fluid fluid);
+lp_grid make_lp_grid(aabb domain, fluid fluid);
 
-int update_lp_grid (lp_grid lpg);
+int update_lp_grid(lp_grid lpg);
+
+int delete_lp_grid(lp_grid lpg);
 
 /*
   Structure CELL represents a cell as the range between a pair of pointers to
