@@ -135,6 +135,16 @@ int move_particle(lp_grid lpg, long ipi, long ici, long tci)
     return 0;
 }
 
+void verify_lp_grid(lp_grid lpg)
+{
+    for (long ici=0; ici<lpg.cell_count; ici++) {
+	for (long ipi=lpg.anchors[ici]; ipi<lpg.anchors[ici+1]; ipi++) {
+	    long tci = lpg.map[particle_laddress(lpg, lpg.particles[ipi])];
+	    if (ici != tci) printf("Holla!\n");
+	}
+    }
+}
+
 int update_lp_grid (lp_grid lpg)
 {
     for (long ici=0; ici<lpg.cell_count; ici++) {
@@ -142,9 +152,10 @@ int update_lp_grid (lp_grid lpg)
 	    // tci is the index of the cell to which the current particle
 	    // actully belongs according to its position in space
 	    long tci = lpg.map[particle_laddress(lpg, lpg.particles[ipi])];
-	    move_particle(lpg, ipi, ici, tci);
+	    if (ici != tci) move_particle(lpg, ipi, ici, tci);
 	}
     }
+    verify_lp_grid(lpg);
     return 0;
 }
 

@@ -8,7 +8,8 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 2000
+#define STEPS 1000
+#define PARTICLES 10000
 
 // Global parameters
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";
@@ -32,7 +33,7 @@ int main (void)
     aabb fluid_aabb;
     fluid_aabb.min = btVector3(-50, -50, -50);
     fluid_aabb.max = btVector3(50, 50, 50);
-    fluid fluid = make_fluid(fluid_aabb, 2000);
+    fluid fluid = make_fluid(fluid_aabb, PARTICLES);
     for (long pi=0; pi<fluid.particle_count; pi++)
 	dynamics_world->addRigidBody(fluid.particles[pi].rigid_body);
 
@@ -48,12 +49,12 @@ int main (void)
 	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
 	printf("Frame %d\n", i);
 	// sph
-	apply_sph(lpg, fluid);
+	// apply_sph(lpg, fluid);
 	// export to vtk
 	std::string filepath = "/home/agspathis/diplom/frames/frame"+std::to_string(i)+".vtk";
 	vtk_export_particles((char*) filepath.c_str(), fluid);
 	// update
-	// update_lp_grid(lpg);
+	update_lp_grid(lpg);
     }
 
     // cleanup

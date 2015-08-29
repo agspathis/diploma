@@ -21,7 +21,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     // values for water
     f.density = 1000;
     f.dynamic_viscosity = 0.001;
-    f.tait_b = 10000;
+    f.tait_b = 100;
 
     // particle counting
     float x, y, z;
