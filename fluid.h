@@ -4,6 +4,7 @@
 #include "terrain.h"
 
 struct particle {
+    long id;
     int samples;
     float density;
     float pressure;

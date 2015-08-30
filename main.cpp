@@ -8,8 +8,8 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 1000
-#define PARTICLES 10000
+#define STEPS 10
+#define PARTICLES 1000
 
 // Global parameters
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";
@@ -56,6 +56,8 @@ int main (void)
 	// update
 	update_lp_grid(lpg);
     }
+
+    print_long_array(lpg.map, lpg.cell_count);
 
     // cleanup
     dynamics_world->removeRigidBody(terrain.rigid_body);

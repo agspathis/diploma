@@ -70,6 +70,19 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
     return 0;
 }
 
+int verify_lp_grid(lp_grid lpg)
+{
+    for (long ici=0; ici<lpg.cell_count; ici++) {
+	for (long ipi=lpg.anchors[ici]; ipi<lpg.anchors[ici+1]; ipi++) {
+	    long tci = lpg.map[particle_laddress(lpg, lpg.particles[ipi])];
+	    if (ici != tci) 
+		printf("ERROR pid=%lu ipi=%lu ici=%lu tci=%lu\n",
+		       lpg.particles[ipi]->id, ipi, ici, tci);
+	}
+    }
+    return 1;
+}
+
 lp_grid make_lp_grid (aabb domain, fluid fluid)
 {
     // Grid parameter initialization/allocation
@@ -108,6 +121,9 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
     for (particle* pp=fluid.particles; pp<fluid.particles+lpg.particle_count; pp++)
 	insert_particle(lpg, pp);
 
+    if (verify_lp_grid(lpg)) printf("New LP grid verified successfully!\n");
+    else printf("New LP grid is wrong...\n");
+
     return lpg;
 }
 
@@ -119,38 +135,24 @@ int move_particle(lp_grid lpg, long ipi, long ici, long tci)
 
     if (ici < tci) {
 	long tpi = lpg.anchors[tci]-1;
-	particle* tmp_storage = lpg.particles[ipi];
-	for (pi=ipi+1; pi<=tpi; pi++)
-	    lpg.particles[pi-1] = lpg.particles[pi];
-	for (ci=ici+1; ci<=tci; ci++) lpg.anchors[ci]--;
+	for (pi=ipi; pi<tpi; pi++) lpg.particles[pi] = lpg.particles[pi+1];
+	for (ci=ici+1; ci<=tci; ci++) lpg.anchors[ci] -= 1;
     }
     else {
 	tpi = lpg.anchors[tci+1];
-	particle* tmp_storage = lpg.particles[ipi];
-	for (pi=ipi-1; pi>=tpi; pi--)
-	    lpg.particles[pi+1] = lpg.particles[pi];
+	for (pi=ipi; pi>tpi; pi--) lpg.particles[pi] = lpg.particles[pi-1];
 	for (ci=tci+1; ci<=ici; ci++) lpg.anchors[ci]++;
     }
     lpg.particles[tpi] = tmp_storage;
+    printf("MOVE pid=%lu ipi=%lu tpi=%lu ici=%lu tci=%lu\n",
+	   tmp_storage->id, ipi, tpi, ici, tci);
     return 0;
-}
-
-void verify_lp_grid(lp_grid lpg)
-{
-    for (long ici=0; ici<lpg.cell_count; ici++) {
-	for (long ipi=lpg.anchors[ici]; ipi<lpg.anchors[ici+1]; ipi++) {
-	    long tci = lpg.map[particle_laddress(lpg, lpg.particles[ipi])];
-	    if (ici != tci) printf("Holla!\n");
-	}
-    }
 }
 
 int update_lp_grid (lp_grid lpg)
 {
     for (long ici=0; ici<lpg.cell_count; ici++) {
 	for (long ipi=lpg.anchors[ici]; ipi<lpg.anchors[ici+1]; ipi++) {
-	    // tci is the index of the cell to which the current particle
-	    // actully belongs according to its position in space
 	    long tci = lpg.map[particle_laddress(lpg, lpg.particles[ipi])];
 	    if (ici != tci) move_particle(lpg, ipi, ici, tci);
 	}

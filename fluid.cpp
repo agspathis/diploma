@@ -39,7 +39,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     f.particles = (particle*) malloc(f.particle_count * sizeof(particle));
 
     // particle construction
-    pi = 0;			// pi = particle index
+    pi = 0;
     btVector3 fp_inertia(0, 0, 0);
     f.fp_shape = new btSphereShape(f.particle_radius);
     f.fp_shape->calculateLocalInertia(f.particle_mass, fp_inertia);
@@ -51,6 +51,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 		btRigidBody::btRigidBodyConstructionInfo fp_ci
 		    (f.particle_mass, fp_motion_state, f.fp_shape, fp_inertia);
 		fp_ci.m_restitution = 1.0;
+		f.particles[pi].id = pi;
 		f.particles[pi].rigid_body = new btRigidBody(fp_ci);
 		f.particles[pi].rigid_body->setLinearVelocity(btVector3(0, 0, 0));
 		f.particles[pi].rigid_body->setAngularFactor(btVector3(0, 0, 0));
