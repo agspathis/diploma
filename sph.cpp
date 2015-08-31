@@ -3,33 +3,56 @@
 
 #include "sph.h"
 
-float poly_6 (float r, float h)
+// density kernel
+float poly_6(float r, float h)
 {
     float result = 0;
-    if (r < h) result = (315/(64*M_PI*pow(h, 9)))*pow(h*h-r*r, 3);
+    if (r<h) result = (315/(64*M_PI*pow(h, 9)))*pow(h*h-r*r, 3);
     return result;
 }
 
-float spiky (float r, float h)
+// pressure kernel
+float spiky(float r, float h)
 {
     float result = 0;
-    if (r < h) result = (15/(M_PI*pow(h, 6)))*pow(h-r, 3);
+    if (r<h) result = (15/(M_PI*pow(h, 6)))*pow(h-r, 3);
     return result;
 }
 
-float viscosity (float r, float h)
+float spiky_grad(float r, float h)
 {
     float result = 0;
-    if (r < h) result = (15/(2*M_PI*pow(h, 3)))*(-(pow(r, 3)/(2*pow(h, 3)))
-						 +(pow(r, 2)/(pow(h, 2)))
-						 +(h/(2*r))
-						 - 1);
+    if (r<h) result = (-45/(M_PI*pow(h, 6))) * pow((h-r), 2);
     return result;
 }
 
-float eos (float density, fluid fluid)
+// viscosity kernel
+float viscy(float r, float h)
+{
+    float result = 0;
+    if (r<h) result = (15/(2*M_PI*pow(h, 3)))*(-(pow(r, 3)/(2*pow(h, 3)))
+					       +(pow(r, 2)/(pow(h, 2)))
+					       +(h/(2*r))
+					       - 1);
+    return result;
+}
+
+float viscy_lapl(float r, float h)
+{
+    float result = 0;
+    if (r<h) result = (45/(M_PI*pow(h, 6))) * (h-r);
+    return result;
+}
+
+// equation of state
+float tait(float density, fluid fluid)
 {
     return fluid.tait_b * (pow((density * fluid.particle_mass) / fluid.density, 7) - 1);
+}
+
+float ideal(float density, fluid fluid)
+{
+    return fluid.ideal_k * (fluid.density - (density * fluid.particle_mass));
 }
 
 int clear_particle_data(lp_grid lpg)
@@ -41,6 +64,7 @@ int clear_particle_data(lp_grid lpg)
 	pp->pressure = 0;
 	pp->p_d2 = 0;
 	pp->force = btVector3(0, 0, 0);
+	pp->rigid_body->clearForces();
     }
     return 0;
 }
@@ -135,12 +159,11 @@ std::vector<interaction> collect_interactions(lp_grid lpg)
     long ic=0;			// interaction count
     for(sii=0; sii<segment_interactions.size(); sii++)
 	ic += segment_interactions[sii].size();
-    printf("Found %lu interactions\n", ic);
     std::vector<interaction> interactions (ic);
     long fii=0;			// flat interactions index
     for(sii=0; sii<segment_interactions.size(); sii++)
-    	for(long ii=0; ii<segment_interactions[sii].size(); ii++, fii++)
-    	    interactions[fii] = segment_interactions[sii][ii];
+	for(long ii=0; ii<segment_interactions[sii].size(); ii++, fii++)
+	    interactions[fii] = segment_interactions[sii][ii];
     return interactions;
 }
 
@@ -161,7 +184,7 @@ int compute_pressures(fluid fluid)
 {
     for(long ppi=0; ppi<fluid.particle_count; ppi++) {
 	particle* pp = fluid.particles+ppi;
-    	pp->pressure = eos(pp->density, fluid);
+	pp->pressure = tait(pp->density, fluid);
 	pp->p_d2 = pp->pressure / pow(pp->density, 2);
     }
     return 0;
@@ -172,7 +195,7 @@ int compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
 {
     for (long ii=0; ii<interactions.size(); ii++) {
 	interaction i = interactions[ii];
-	float pf = (i.p0->p_d2 + i.p1->p_d2) * spiky(i.distance, fluid.smoothing_radius);
+	float pf = (i.p0->p_d2 + i.p1->p_d2) * spiky_grad(i.distance, fluid.smoothing_radius);
 	btVector3 dir = i.direction;
 	i.p0->force += (dir *= pf);
 	i.p1->force -= dir;
@@ -180,6 +203,8 @@ int compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
     for (long pi=0; pi<fluid.particle_count; pi++) {
 	particle* pp = fluid.particles+pi;
 	pp->rigid_body->applyCentralForce(pp->force);
+	printf("Samples = %lu, Density = %f, particle_mass = %f\n",
+	       pp->samples, pp->density, fluid.particle_mass);
     }
     return 0;
 }

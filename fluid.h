@@ -24,6 +24,7 @@ struct fluid {
     float density;
     float sample_density;
     float tait_b;
+    float ideal_k;
     float smoothing_radius;
     btCollisionShape* fp_shape;
     particle* particles;

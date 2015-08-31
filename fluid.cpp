@@ -22,6 +22,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     f.density = 1000;
     f.dynamic_viscosity = 0.001;
     f.tait_b = 100;
+    f.ideal_k = 0.1;
 
     // particle counting
     float x, y, z;

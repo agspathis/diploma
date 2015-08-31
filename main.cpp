@@ -8,7 +8,7 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 500
+#define STEPS 1000
 #define PARTICLES 1000
 
 // Global parameters
@@ -46,7 +46,7 @@ int main (void)
     for (long step=0; step<STEPS; step++) {
 	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
 	printf("Frame %lu\n", step);
-	// apply_sph(lpg, fluid);
+	apply_sph(lpg, fluid);
 	vtk_export_particles(output_dir, fluid, step);
 	update_lp_grid(lpg);
     }
