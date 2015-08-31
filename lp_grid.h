@@ -37,16 +37,16 @@ struct lp_grid {
     long x, y, z;
     long xss, yss, zss;
     long cell_count, particle_count;
-    long* map;
-    long* anchors;
+    anchor** map;
+    anchor* anchors;
     particle** particles;
 };
 
 lp_grid make_lp_grid(aabb domain, fluid fluid);
 
-int update_lp_grid(lp_grid lpg);
+void update_lp_grid(lp_grid lpg);
 
-int delete_lp_grid(lp_grid lpg);
+void delete_lp_grid(lp_grid lpg);
 
 /*
   Structure CELL represents a cell as the range between a pair of pointers to

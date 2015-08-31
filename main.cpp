@@ -8,7 +8,7 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 10
+#define STEPS 1000
 #define PARTICLES 1000
 
 // Global parameters
@@ -56,8 +56,6 @@ int main (void)
 	// update
 	update_lp_grid(lpg);
     }
-
-    print_long_array(lpg.map, lpg.cell_count);
 
     // cleanup
     dynamics_world->removeRigidBody(terrain.rigid_body);
