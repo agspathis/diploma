@@ -8,11 +8,13 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 1000
+#define STEPS 500
 #define PARTICLES 1000
 
 // Global parameters
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";
+aabb fluid_aabb = { btVector3(-50, -50, -50), btVector3(50, 50, 50) };
+char output_dir[] = "/home/agspathis/diplom/frames";
 
 int main (void)
 {
@@ -25,35 +27,27 @@ int main (void)
 	new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
     dynamics_world->setGravity(btVector3(0, -9.81, 0));
 
-    // terrain construction
+    // terrain, fluid, lp grid construction
     terrain terrain = make_terrain_obj(obj_filename);
     dynamics_world->addRigidBody(terrain.rigid_body);
 
-    // fluid construction
-    aabb fluid_aabb;
-    fluid_aabb.min = btVector3(-50, -50, -50);
-    fluid_aabb.max = btVector3(50, 50, 50);
     fluid fluid = make_fluid(fluid_aabb, PARTICLES);
     for (long pi=0; pi<fluid.particle_count; pi++)
 	dynamics_world->addRigidBody(fluid.particles[pi].rigid_body);
 
-    // grid construction
     btVector3 origin = btVector3(0, 0, 0);
     lp_grid lpg = make_lp_grid (terrain.taabb, fluid);
-    
-    system("exec rm /home/agspathis/diplom/frames/*");
+
+    // change to and clear output directory
+    chdir(output_dir);
+    system("exec rm *");
 
     // simulation
-    for (int i=0; i<STEPS; i++) {
-	// stepping
+    for (long step=0; step<STEPS; step++) {
 	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
-	printf("Frame %d\n", i);
-	// sph
+	printf("Frame %lu\n", step);
 	// apply_sph(lpg, fluid);
-	// export to vtk
-	std::string filepath = "/home/agspathis/diplom/frames/frame"+std::to_string(i)+".vtk";
-	vtk_export_particles((char*) filepath.c_str(), fluid);
-	// update
+	vtk_export_particles(output_dir, fluid, step);
 	update_lp_grid(lpg);
     }
 
