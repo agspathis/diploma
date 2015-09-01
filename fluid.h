@@ -39,4 +39,6 @@ int delete_fluid(fluid fluid);
 
 btVector3 particle_position (particle* pp);
 
+btVector3 particle_velocity (particle* pp);
+
 #endif

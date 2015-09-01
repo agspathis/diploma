@@ -195,16 +195,22 @@ int compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
 {
     for (long ii=0; ii<interactions.size(); ii++) {
 	interaction i = interactions[ii];
-	float pf = (i.p0->p_d2 + i.p1->p_d2) * spiky_grad(i.distance, fluid.smoothing_radius);
+	float pf = 
+	    (i.p0->p_d2 + i.p1->p_d2) *
+	    spiky_grad(i.distance, fluid.smoothing_radius);
+	float vf = 
+	    fluid.dynamic_viscosity *
+	    (particle_velocity(i.p0)- particle_velocity(i.p1)).length() *
+	    viscy_lapl(i.distance, fluid.smoothing_radius);
 	btVector3 dir = i.direction;
-	i.p0->force += (dir *= pf);
+	i.p0->force += (dir *= (vf));
 	i.p1->force -= dir;
     }
     for (long pi=0; pi<fluid.particle_count; pi++) {
 	particle* pp = fluid.particles+pi;
 	pp->rigid_body->applyCentralForce(pp->force);
-	printf("Samples = %lu, Density = %f, particle_mass = %f\n",
-	       pp->samples, pp->density, fluid.particle_mass);
+	// printf("Samples = %lu, Density = %f, particle_mass = %f\n",
+	//        pp->samples, pp->density, fluid.particle_mass);
     }
     return 0;
 }

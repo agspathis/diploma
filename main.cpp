@@ -9,11 +9,11 @@
 
 // Constants
 #define STEPS 1000
-#define PARTICLES 1000
+#define PARTICLES 10000
 
 // Global parameters
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";
-aabb fluid_aabb = { btVector3(-50, -50, -50), btVector3(50, 50, 50) };
+aabb fluid_aabb = { btVector3(-50.0, -50.0, -50.0), btVector3(50.0, 50.0, 50.0) };
 char output_dir[] = "/home/agspathis/diplom/frames";
 
 int main (void)

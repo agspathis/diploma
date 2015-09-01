@@ -28,6 +28,3 @@ sph.o: sph.cpp sph.h
 
 clean:
 	rm -rf *o main
-
-reset:
-	rm frames/frame*

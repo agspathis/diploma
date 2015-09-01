@@ -103,17 +103,13 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
     for (long ci=0; ci<ps.size(); ci++) 
 	lpg.map[linearize(lpg, ps[ci].x(), ps[ci].y(), ps[ci].z())] = lpg.anchors+ci;
     lpg.map[lpg.cell_count] = lpg.anchors+lpg.cell_count;
-
     // Initialize ANCHORS to LPG.PARTICLES (start of array)
     for (anchor* a=lpg.anchors; a<=lpg.anchors+lpg.cell_count; a++) *a = lpg.particles;
-
     // Populate PARTICLES
     for (particle* pp=fluid.particles; pp<fluid.particles+lpg.particle_count; pp++)
 	insert_particle(lpg, pp);
 
-    printf("INITIALIZATION VERIFICATION\n");
     verify_lp_grid(lpg);
-
     return lpg;
 }
 

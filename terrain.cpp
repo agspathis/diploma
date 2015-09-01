@@ -102,7 +102,7 @@ terrain make_terrain_obj(char* filename)
 	(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     btRigidBody::btRigidBodyConstructionInfo t_ci
 	(0, t_motion_state, t.shape, btVector3(0, 0, 0));
-    t_ci.m_restitution = 1.0;
+    t_ci.m_restitution = 0.8;	// fluid adhesion to terrain
     t.rigid_body = new btRigidBody(t_ci);
 
     // print terrain aabb
