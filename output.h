@@ -5,6 +5,6 @@
 
 #include "fluid.h"
 
-void vtk_export_particles (char* output_dir, fluid fluid, long frame);
+void vtk_export_particles(char* output_dir, fluid fluid, long frame);
 
 #endif

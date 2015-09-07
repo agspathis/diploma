@@ -63,7 +63,8 @@ int clear_particle_data(lp_grid lpg)
 	pp->density = 0;
 	pp->pressure = 0;
 	pp->p_d2 = 0;
-	pp->force = btVector3(0, 0, 0);
+	pp->pforce = btVector3(0, 0, 0);
+	pp->vforce = btVector3(0, 0, 0);
 	pp->rigid_body->clearForces();
     }
     return 0;
@@ -193,22 +194,26 @@ int compute_pressures(fluid fluid)
 // forces arise from pressure difference and viscosity
 int compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
 {
+    btVector3 dir;
     for (long ii=0; ii<interactions.size(); ii++) {
 	interaction i = interactions[ii];
-	float pf = 
+	float pf_fraction = 
 	    (i.p0->p_d2 + i.p1->p_d2) *
 	    spiky_grad(i.distance, fluid.smoothing_radius);
-	float vf = 
+	float vf_fraction = 
 	    fluid.dynamic_viscosity *
 	    (particle_velocity(i.p0)- particle_velocity(i.p1)).length() *
 	    viscy_lapl(i.distance, fluid.smoothing_radius);
-	btVector3 dir = i.direction;
-	i.p0->force += (dir *= (vf));
-	i.p1->force -= dir;
+	dir = i.direction;
+	i.p0->pforce += (dir *= pf_fraction);
+	i.p1->pforce -= dir;
+	dir = i.direction;
+	i.p0->vforce += (dir *= vf_fraction);
+	i.p1->vforce -= dir;
     }
     for (long pi=0; pi<fluid.particle_count; pi++) {
 	particle* pp = fluid.particles+pi;
-	pp->rigid_body->applyCentralForce(pp->force);
+	pp->rigid_body->applyCentralForce(pp->pforce + pp->vforce);
 	// printf("Samples = %lu, Density = %f, particle_mass = %f\n",
 	//        pp->samples, pp->density, fluid.particle_mass);
     }

@@ -15,21 +15,26 @@ typedef particle** anchor;
   XSS, YSS, ZSS   : Segment sizes along each axis for load distribution among threads
   CELL_COUNT      : Total number of cells (X*Y*Z).
   PARTICLE_COUNT  : Total number of particles.
-  MAP		  : Array map of linearized addresses (3D->1D by function LINEARIZE_ADDRESS)
-                    to indices on ANCHORS, implementing the locality preserving 3D->1D
-		    mapping. LINEARIZE_ADDRESS returns CELL_COUNT if given address out of
-		    grid bounds (X, Y, Z), which maps to the last cell on ANCHORS.
-  ANCHORS         : Array containing the cell ANCHORs, i.e. index of the first of cell
-		    particles in PARTICLES. ANCHORs correspond to cells in ascending linear
-		    order, so the relation A[i-1] <= A[i] holds for all elements of this 
-		    array. When A[i-1]=A[i], the cell corresponding to A[i-1] contains
-		    no particles. This array has CELL_COUNT+1 elements, where the last
-		    anchor refers to a virtual cell containing particles which are out of
-		    grid bounds (also serves for loop termination conditions).
-  PARTICLES       : Array containing pointers to actual simulation particles. It has
-                    PARTICLE_COUNT+1 elements. The extra slot is used for loop termination
-		    conditions and valid PARTICLE_RANGE for the last cell (contains
-		    out-of-grid particles).
+  MAP		  : Array containing pointers to ANCHORS. Each pointer is stored
+		    at the index computed by the function LINEARIZE from the 3D
+		    address of the respective cell in the grid. The pointer value
+		    is determined by the cell's position in the spatial ordering
+		    along a space-filling curve, thus implementing the locality
+		    preserving 3D->1D mapping. LINEARIZE returns CELL_COUNT if
+		    given address out of grid bounds (X, Y, Z), which maps to the
+		    last cell on ANCHORS.
+  ANCHORS         : Array containing the anchor for each cell in spatial order,
+		    i.e. pointer to the first of cell particles in PARTICLES, so
+		    the relation A[i-1] <= A[i] holds for all anchors of this
+		    array. When A[i-1]=A[i], the cell corresponding to A[i-1]
+		    contains no particles. This array has CELL_COUNT+1 elements,
+		    where the last anchor refers to a virtual cell containing
+		    particles which are out of grid bounds (also used for loop
+		    termination conditions).
+  PARTICLES       : Array containing pointers to actual simulation particles. It
+		    has PARTICLE_COUNT+1 elements. The extra last slot is used
+		    for loop termination conditions and valid PARTICLE_RANGE for
+		    the last cell (containing out-of-grid particles).
 */
 struct lp_grid {
     btVector3 origin;

@@ -9,7 +9,7 @@
 
 // Constants
 #define STEPS 1000
-#define PARTICLES 10000
+#define PARTICLES 1000
 
 // Global parameters
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";

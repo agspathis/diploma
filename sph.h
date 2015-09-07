@@ -8,7 +8,6 @@ struct interaction {
     particle* p1;
     btScalar distance;
     btVector3 direction;
-    btScalar force;
 };
 
 int apply_sph(lp_grid lpg, fluid fluid);

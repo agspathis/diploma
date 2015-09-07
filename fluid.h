@@ -9,7 +9,9 @@ struct particle {
     float density;
     float pressure;
     float p_d2;
-    btVector3 force;
+    btVector3 pforce;
+    btVector3 vforce;
+    btVector3 neighbour_location;
     btRigidBody* rigid_body;
 };
 
