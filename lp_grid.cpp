@@ -39,7 +39,7 @@ void insert_particle(lp_grid lpg, particle* pp)
     for (anchor p=lpg.particles+lpg.particle_count; p>tp; p--)
 	*p = *(p-1);
     *tp = pp;
-    for (anchor* a=ta+1; a<=lpg.anchors+lpg.cell_count; a++) 
+    for (anchor* a=ta+1; a<=lpg.anchors+lpg.cell_count; a++)
 	(*a)++;
 }
 
@@ -81,11 +81,10 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
     // Grid parameter initialization/allocation
     lp_grid lpg; long i,j,k;
     allocate_lp_grid(&lpg, domain, fluid);
-    printf("LP grid info:\n");
+    printf("LP_GRID info:\n");
     printf("x=%lu, y=%lu, z=%lu\n", lpg.x, lpg.y, lpg.z);
     printf("xss=%lu, yss=%lu, zss=%lu\n", lpg.xss, lpg.yss, lpg.zss);
-    printf("Cell count=%lu\n", lpg.cell_count);
-    printf("Particle count=%lu\n", lpg.particle_count);
+    printf("cell_count=%lu\n", lpg.cell_count);
     printf("\n");
 
     // Make points in centers of cells and spatially sort them
@@ -100,7 +99,7 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
     CGAL::hilbert_sort(ps.begin(), ps.end());
 
     // Initialize MAP
-    for (long ci=0; ci<ps.size(); ci++) 
+    for (long ci=0; ci<ps.size(); ci++)
 	lpg.map[linearize(lpg, ps[ci].x(), ps[ci].y(), ps[ci].z())] = lpg.anchors+ci;
     lpg.map[lpg.cell_count] = lpg.anchors+lpg.cell_count;
     // Initialize ANCHORS to LPG.PARTICLES (start of array)

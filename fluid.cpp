@@ -15,7 +15,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     float dz = z_max - z_min;
     float volume = dx*dy*dz;
     // F.PARTICLE_RADIUS computed based on the fraction of space that equal
-    // spheres in closest packing (HPC lattice) occupy is pi/(3*sqrt(2))
+    // spheres in closest packing (HPC lattice) occupy = pi/(3*sqrt(2))
     f.particle_radius = cbrt(volume/(5.6568542*desired_particle_count));
 
     // values for water
@@ -57,6 +57,14 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 		f.particles[pi].rigid_body->setLinearVelocity(btVector3(0, 0, 0));
 		f.particles[pi].rigid_body->setAngularFactor(btVector3(0, 0, 0));
 	    }
+
+    // print fluid info
+    printf("FLUID info:\n");
+    printf("particle_mass = %f\n", f.particle_mass);
+    printf("particle_radius = %f\n", f.particle_radius);
+    printf("particle_count = %lu\n", f.particle_count);
+    printf("smoothing_radius = %f\n\n", f.smoothing_radius);
+
     return f;
 }
 

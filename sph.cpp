@@ -55,7 +55,7 @@ float ideal(float density, fluid fluid)
     return fluid.ideal_k * (fluid.density - (density * fluid.particle_mass));
 }
 
-int clear_particle_data(lp_grid lpg)
+void clear_particle_data(lp_grid lpg)
 {
     for (long pi=0; pi<lpg.particle_count; pi++) {
 	particle* pp = lpg.particles[pi];
@@ -67,10 +67,9 @@ int clear_particle_data(lp_grid lpg)
 	pp->vforce = btVector3(0, 0, 0);
 	pp->rigid_body->clearForces();
     }
-    return 0;
 }
 
-int get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi, std::vector<particle*> &neighbours)
+void get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi, std::vector<particle*> &neighbours)
 {
     // scan only half of surrounding cells to avoid duplication of work
     cell neighbour_cells[13];
@@ -91,12 +90,10 @@ int get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi, std::vector<part
     for(int nci=0; nci<13; nci++)
 	for(anchor a=neighbour_cells[nci].start; a<neighbour_cells[nci].end; a++)
 	    neighbours.push_back(*a);
-
-    return 0;
 }
 
-int collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, long sii,
-				  std::vector< std::vector<interaction> > &interactions)
+void collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, long sii,
+				   std::vector< std::vector<interaction> > &interactions)
 {
     long ixi = xsi*lpg.xss;
     long iyi = ysi*lpg.yss;
@@ -133,7 +130,6 @@ int collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, lon
 		neighbours.clear();
 	    }
     interactions[sii] = segment_interactions;
-    return 0;
 }
 
 // The grid gets divided into segments (of dimensions LPG.XSS * LPG.YSS *
@@ -168,7 +164,7 @@ std::vector<interaction> collect_interactions(lp_grid lpg)
     return interactions;
 }
 
-int compute_densities(std::vector<interaction> interactions, float smoothing_radius)
+void compute_densities(std::vector<interaction> interactions, float smoothing_radius)
 {
     for(long ii=0; ii<interactions.size(); ii++) {
 	float density_fraction = poly_6(interactions[ii].distance, smoothing_radius);
@@ -177,22 +173,20 @@ int compute_densities(std::vector<interaction> interactions, float smoothing_rad
 	(*interactions[ii].p1).samples++;
 	(*interactions[ii].p1).density += density_fraction;
     }
-    return 0;
 }
 
 // compute pressures from EOS and pressure/density^2 for each particle
-int compute_pressures(fluid fluid)
+void compute_pressures(fluid fluid)
 {
     for(long ppi=0; ppi<fluid.particle_count; ppi++) {
 	particle* pp = fluid.particles+ppi;
 	pp->pressure = tait(pp->density, fluid);
 	pp->p_d2 = pp->pressure / pow(pp->density, 2);
     }
-    return 0;
 }
 
 // forces arise from pressure difference and viscosity
-int compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
+void compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
 {
     btVector3 dir;
     for (long ii=0; ii<interactions.size(); ii++) {
@@ -217,15 +211,15 @@ int compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
 	// printf("Samples = %lu, Density = %f, particle_mass = %f\n",
 	//        pp->samples, pp->density, fluid.particle_mass);
     }
-    return 0;
 }
 
-int apply_sph(lp_grid lpg, fluid fluid)
+void apply_sph(fluid_sim* fsim)
 {
+    fluid fluid = *(fsim->f);
+    lp_grid lpg = *(fsim->lpg);
     clear_particle_data(lpg);
     std::vector<interaction> interactions = collect_interactions(lpg);
     compute_densities(interactions, lpg.step);
     compute_pressures(fluid);
     compute_apply_forces(interactions, fluid);
-    return 0;
 }

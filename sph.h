@@ -10,6 +10,11 @@ struct interaction {
     btVector3 direction;
 };
 
-int apply_sph(lp_grid lpg, fluid fluid);
+struct fluid_sim {
+    fluid* f;
+    lp_grid* lpg;
+};
+
+void apply_sph(fluid_sim* fsim);
 
 #endif

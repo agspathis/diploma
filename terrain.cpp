@@ -106,7 +106,7 @@ terrain make_terrain_obj(char* filename)
     t.rigid_body = new btRigidBody(t_ci);
 
     // print terrain aabb
-    printf("Terrain AABB info:\n");
+    printf("TERRAIN info:\n");
     print_aabb(t.taabb);
     printf("\n");
 

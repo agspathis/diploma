@@ -8,26 +8,37 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 1000
+#define STEPS 300
 #define PARTICLES 1000
 
 // Global parameters
-char obj_filename[] = "/home/agspathis/diplom/models/obj/box.obj";
-aabb fluid_aabb = { btVector3(-50.0, -50.0, -50.0), btVector3(50.0, 50.0, 50.0) };
 char output_dir[] = "/home/agspathis/diplom/frames";
+char obj_filename[] = "/home/agspathis/diplom/models/obj/box-small.obj";
+aabb fluid_aabb = { btVector3(2, 2, 2), btVector3(8, 8, 8) };
+
+void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
+    fluid_sim* f_simp = (fluid_sim*) dynamics_world->getWorldUserInfo();
+    update_lp_grid(*(f_simp->lpg));
+    // apply_sph(f_simp);
+}
 
 int main (void)
 {
     // dynamics world construction
-    btDefaultCollisionConfiguration* collision_configuration = new btDefaultCollisionConfiguration();
-    btCollisionDispatcher* dispatcher = new btCollisionDispatcher(collision_configuration);
-    btBroadphaseInterface* broadphase = new btDbvtBroadphase();
-    btSequentialImpulseConstraintSolver* solver = new btSequentialImpulseConstraintSolver;
+    btDefaultCollisionConfiguration* collision_configuration =
+	new btDefaultCollisionConfiguration();
+    btCollisionDispatcher* dispatcher =
+	new btCollisionDispatcher(collision_configuration);
+    btBroadphaseInterface* broadphase =
+	new btDbvtBroadphase();
+    btSequentialImpulseConstraintSolver* solver =
+	new btSequentialImpulseConstraintSolver;
     btDiscreteDynamicsWorld* dynamics_world =
-	new btDiscreteDynamicsWorld(dispatcher, broadphase, solver, collision_configuration);
+	new btDiscreteDynamicsWorld(dispatcher, broadphase,
+				    solver, collision_configuration);
     dynamics_world->setGravity(btVector3(0, -9.81, 0));
 
-    // terrain, fluid, lp grid construction
+    // terrain, fluid, lp_grid and fluid_sim construction
     terrain terrain = make_terrain_obj(obj_filename);
     dynamics_world->addRigidBody(terrain.rigid_body);
 
@@ -35,8 +46,12 @@ int main (void)
     for (long pi=0; pi<fluid.particle_count; pi++)
 	dynamics_world->addRigidBody(fluid.particles[pi].rigid_body);
 
-    btVector3 origin = btVector3(0, 0, 0);
     lp_grid lpg = make_lp_grid (terrain.taabb, fluid);
+    
+    fluid_sim fluid_sim;
+    fluid_sim.f = &fluid;
+    fluid_sim.lpg = &lpg;
+    dynamics_world->setInternalTickCallback(tick_callback, (void*) &fluid_sim);
 
     // change to and clear output directory
     chdir(output_dir);
@@ -44,11 +59,9 @@ int main (void)
 
     // simulation
     for (long step=0; step<STEPS; step++) {
-	dynamics_world->stepSimulation(1/60.f, 10, 1/100.f);
+	dynamics_world->stepSimulation(0.1, 100, 0.001);
 	printf("Frame %lu\n", step);
-	apply_sph(lpg, fluid);
 	vtk_export_particles(output_dir, fluid, step);
-	update_lp_grid(lpg);
     }
 
     // cleanup

@@ -36,7 +36,10 @@ void vtk_export_particles(char* output_dir, fluid fluid, long frame)
     // fprintf(vtk, "LOOKUP_TABLE default\n");
     for (particle* pp=fluid.particles; pp<fluid.particles+size; pp++) {
 	btVector3 pforce = pp->pforce;
-	fprintf(vtk, "%f %f %f\n", pforce.getX(), pforce.getY(), pforce.getZ());
+	fprintf(vtk, "%f %f %f\n",
+		pforce.getX() / fluid.particle_mass,
+		pforce.getY() / fluid.particle_mass,
+		pforce.getZ() / fluid.particle_mass);
     }
     fprintf(vtk, "\n");
 
@@ -44,7 +47,10 @@ void vtk_export_particles(char* output_dir, fluid fluid, long frame)
     // fprintf(vtk, "LOOKUP_TABLE default\n");
     for (particle* pp=fluid.particles; pp<fluid.particles+size; pp++) {
 	btVector3 vforce = pp->vforce;
-	fprintf(vtk, "%f %f %f\n", vforce.getX(), vforce.getY(), vforce.getZ());
+	fprintf(vtk, "%f %f %f\n",
+		vforce.getX() / fluid.particle_mass,
+		vforce.getY() / fluid.particle_mass,
+		vforce.getZ() / fluid.particle_mass);
     }
     fprintf(vtk, "\n");
 
