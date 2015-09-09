@@ -11,10 +11,12 @@ struct interaction {
 };
 
 struct fluid_sim {
-    fluid* f;
-    lp_grid* lpg;
+    fluid f;
+    lp_grid lpg;
 };
 
-void apply_sph(fluid_sim* fsim);
+void apply_sph(fluid_sim fsim);
+
+void adjust_fluid(fluid* fluid, lp_grid lpg, aabb fluid_aabb, aabb terrain_aabb);
 
 #endif

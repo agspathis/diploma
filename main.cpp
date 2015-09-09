@@ -8,18 +8,19 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 300
-#define PARTICLES 1000
+#define STEPS 1
+#define FRAME_DT 0.01
+#define PARTICLES 10000
 
 // Global parameters
 char output_dir[] = "/home/agspathis/diplom/frames";
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box-small.obj";
-aabb fluid_aabb = { btVector3(2, 2, 2), btVector3(8, 8, 8) };
+aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(5, 5, 5) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
-    fluid_sim* f_simp = (fluid_sim*) dynamics_world->getWorldUserInfo();
-    update_lp_grid(*(f_simp->lpg));
-    // apply_sph(f_simp);
+    fluid_sim* fsimp = (fluid_sim*) dynamics_world->getWorldUserInfo();
+    update_lp_grid(fsimp->lpg);
+    // apply_sph(fsimp);
 }
 
 int main (void)
@@ -36,7 +37,7 @@ int main (void)
     btDiscreteDynamicsWorld* dynamics_world =
 	new btDiscreteDynamicsWorld(dispatcher, broadphase,
 				    solver, collision_configuration);
-    dynamics_world->setGravity(btVector3(0, -9.81, 0));
+    dynamics_world->setGravity(btVector3(0, -G, 0));
 
     // terrain, fluid, lp_grid and fluid_sim construction
     terrain terrain = make_terrain_obj(obj_filename);
@@ -46,21 +47,23 @@ int main (void)
     for (long pi=0; pi<fluid.particle_count; pi++)
 	dynamics_world->addRigidBody(fluid.particles[pi].rigid_body);
 
-    lp_grid lpg = make_lp_grid (terrain.taabb, fluid);
+    lp_grid lp_grid = make_lp_grid(terrain.taabb, fluid);
     
     fluid_sim fluid_sim;
-    fluid_sim.f = &fluid;
-    fluid_sim.lpg = &lpg;
+    fluid_sim.f = fluid;
+    fluid_sim.lpg = lp_grid;
+
     dynamics_world->setInternalTickCallback(tick_callback, (void*) &fluid_sim);
+    adjust_fluid(&fluid, lp_grid, fluid_aabb, terrain.taabb);
 
     // change to and clear output directory
     chdir(output_dir);
     system("exec rm *");
 
     // simulation
-    for (long step=0; step<STEPS; step++) {
-	dynamics_world->stepSimulation(0.1, 100, 0.001);
-	printf("Frame %lu\n", step);
+    for (int step=0; step<STEPS; step++) {
+	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/fluid.dt), fluid.dt);
+	printf("Frame %d / %d\n", step, STEPS-1);
 	vtk_export_particles(output_dir, fluid, step);
     }
 
@@ -72,7 +75,7 @@ int main (void)
 	dynamics_world->removeRigidBody(fluid.particles[pi].rigid_body);
     delete_fluid(fluid);
 
-    delete_lp_grid(lpg);
+    delete_lp_grid(lp_grid);
 
     delete dynamics_world;
     delete solver;

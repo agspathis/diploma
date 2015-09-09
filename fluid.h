@@ -3,6 +3,12 @@
 
 #include "terrain.h"
 
+#define G 9.81
+#define TAIT_GAMMA 7
+#define WATER_DENSITY 1000
+#define WATER_DV 0.001
+#define MAX_DENSITY_FLUCTUATION 0.1
+
 struct particle {
     long id;
     int samples;
@@ -16,21 +22,25 @@ struct particle {
 };
 
 /*
-  SAMPLE_DENSITY is the local density as estimated by summation over the samples
-  inside SMOOTHING_RADIUS when the fluid is at rest, but divided by PARTICLE_MASS
+  DENSITY_FACTOR is determined from the fluid at rest and scales the density
+  kernel estimation to match the actual density.
  */
 struct fluid {
+    /* set in construction */
+    float density;
     float particle_mass;
     float particle_radius;
+    float dynamic_viscosity;
     long particle_count;
-    float density;
-    float sample_density;
-    float tait_b;
-    float ideal_k;
     float smoothing_radius;
+    /* set in calibration */
+    float dt;
+    float tait_b;
+    int max_samples;
+    float density_factor;
+    /* fluid data */
     btCollisionShape* fp_shape;
     particle* particles;
-    float dynamic_viscosity;
 };
 
 fluid make_fluid(aabb aabb, long desired_particle_count);

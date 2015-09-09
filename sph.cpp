@@ -7,7 +7,8 @@
 float poly_6(float r, float h)
 {
     float result = 0;
-    if (r<h) result = (315/(64*M_PI*pow(h, 9)))*pow(h*h-r*r, 3);
+    // if (r<h) result = (315/(64*M_PI*pow(h, 9)))*pow(h*h-r*r, 3);
+    if (r<h) result = pow(h*h-r*r, 3);
     return result;
 }
 
@@ -47,12 +48,9 @@ float viscy_lapl(float r, float h)
 // equation of state
 float tait(float density, fluid fluid)
 {
-    return fluid.tait_b * (pow((density * fluid.particle_mass) / fluid.density, 7) - 1);
-}
-
-float ideal(float density, fluid fluid)
-{
-    return fluid.ideal_k * (fluid.density - (density * fluid.particle_mass));
+    return fluid.tait_b * (pow((density*fluid.particle_mass) / fluid.density,
+			       TAIT_GAMMA)
+			   -1);
 }
 
 void clear_particle_data(lp_grid lpg)
@@ -69,7 +67,8 @@ void clear_particle_data(lp_grid lpg)
     }
 }
 
-void get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi, std::vector<particle*> &neighbours)
+void get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi,
+			 std::vector<particle*> &neighbours)
 {
     // scan only half of surrounding cells to avoid duplication of work
     cell neighbour_cells[13];
@@ -213,13 +212,43 @@ void compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
     }
 }
 
-void apply_sph(fluid_sim* fsim)
+void apply_sph(fluid_sim fsim)
 {
-    fluid fluid = *(fsim->f);
-    lp_grid lpg = *(fsim->lpg);
+    clear_particle_data(fsim.lpg);
+    std::vector<interaction> interactions = collect_interactions(fsim.lpg);
+    compute_densities(interactions, fsim.lpg.step);
+    compute_pressures(fsim.f);
+    compute_apply_forces(interactions, fsim.f);
+}
+
+void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
+{
+    float height = faabb.max.getY() - taabb.min.getY();
+    float v_max = sqrt(2 * G * height);
+    float cs = v_max / sqrt(MAX_DENSITY_FLUCTUATION);
+    f->tait_b = (f->density) * pow(cs, 2) / TAIT_GAMMA;
+
+    // dt to match MAX_DENSITY_FLUCTUATION between ticks
+    f->dt = MAX_DENSITY_FLUCTUATION * f->particle_radius / v_max;
+    
+    // measure and store max density and samples in the initial fluid
+    // configuration in order to ajust later sph computations
     clear_particle_data(lpg);
     std::vector<interaction> interactions = collect_interactions(lpg);
     compute_densities(interactions, lpg.step);
-    compute_pressures(fluid);
-    compute_apply_forces(interactions, fluid);
+
+    int max_samples = 0;
+    float max_density = 0;
+    for(particle* pp=f->particles; pp<f->particles + f->particle_count; pp++) {
+	if (pp->samples > max_samples) max_samples = pp->samples;
+	if (pp->density > max_density) max_density = pp->density;
+    }
+    f->max_samples = max_samples;
+    f->density_factor = f->density / (max_density * f->particle_mass);
+
+    printf("FLUID ADJUSTMENT info:\n");
+    printf("dt = %f\n", f->dt);
+    printf("tait_b = %f\n", f->tait_b);
+    printf("max_samples = %d\n", max_samples);
+    printf("density_factor = %f\n\n", f->density_factor);
 }

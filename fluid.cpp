@@ -14,15 +14,26 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     float dy = y_max - y_min;
     float dz = z_max - z_min;
     float volume = dx*dy*dz;
+
     // F.PARTICLE_RADIUS computed based on the fraction of space that equal
     // spheres in closest packing (HPC lattice) occupy = pi/(3*sqrt(2))
     f.particle_radius = cbrt(volume/(5.6568542*desired_particle_count));
 
+    // adjustment for the fluid to be scrictly inside the AABB
+    x_min += f.particle_radius;
+    y_min += f.particle_radius;
+    z_min += f.particle_radius;
+    x_max -= f.particle_radius;
+    y_max -= f.particle_radius;
+    z_max -= f.particle_radius;
+    dx = x_max - x_min;
+    dy = y_max - y_min;
+    dz = z_max - z_min;
+    volume = dx*dy*dz;
+
     // values for water
-    f.density = 1000;
-    f.dynamic_viscosity = 0.001;
-    f.tait_b = 100;
-    f.ideal_k = 0.1;
+    f.density = WATER_DENSITY;
+    f.dynamic_viscosity = WATER_DV;
 
     // particle counting
     float x, y, z;
@@ -36,7 +47,6 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     
     // F.SMOOTHING_RADIUS for about 50 smoothing samples
     f.smoothing_radius = 4.2 * f.particle_radius;
-    f.sample_density = f.density / f.particle_mass;
     f.particles = (particle*) malloc(f.particle_count * sizeof(particle));
 
     // particle construction
