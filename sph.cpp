@@ -24,6 +24,7 @@ float spiky_grad(float r, float h)
 {
     float result = 0;
     if (r<h) result = (-45/(M_PI*pow(h, 6))) * pow((h-r), 2);
+    // if (r<h) result = pow((h-r), 2);
     return result;
 }
 
@@ -41,7 +42,8 @@ float viscy(float r, float h)
 float viscy_lapl(float r, float h)
 {
     float result = 0;
-    if (r<h) result = (45/(M_PI*pow(h, 6))) * (h-r);
+    // if (r<h) result = (45/(M_PI*pow(h, 6))) * (h-r);
+    if (r<h) result = (h-r);
     return result;
 }
 
@@ -167,36 +169,37 @@ void compute_densities(std::vector<interaction> interactions, float smoothing_ra
 {
     for(long ii=0; ii<interactions.size(); ii++) {
 	float density_fraction = poly_6(interactions[ii].distance, smoothing_radius);
-	(*interactions[ii].p0).samples++;
-	(*interactions[ii].p0).density += density_fraction;
-	(*interactions[ii].p1).samples++;
-	(*interactions[ii].p1).density += density_fraction;
+	interactions[ii].p0->density += density_fraction;
+	interactions[ii].p0->samples++;
+	interactions[ii].p1->density += density_fraction;
+	interactions[ii].p1->samples++;
     }
 }
 
 // compute pressures from EOS and pressure/density^2 for each particle
-void compute_pressures(fluid fluid)
+void compute_pressures(fluid f)
 {
-    for(long ppi=0; ppi<fluid.particle_count; ppi++) {
-	particle* pp = fluid.particles+ppi;
-	pp->pressure = tait(pp->density, fluid);
+    for(particle* pp=f.particles; pp<f.particles+f.particle_count; pp++) {
+	pp->density += (f.max_samples - pp->samples) * f.avg_density_fraction;
+	pp->density *= f.particle_mass * f.density_factor;
+	pp->pressure = tait(pp->density, f);
 	pp->p_d2 = pp->pressure / pow(pp->density, 2);
     }
 }
 
 // forces arise from pressure difference and viscosity
-void compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
+void apply_forces(std::vector<interaction> interactions, fluid f)
 {
     btVector3 dir;
     for (long ii=0; ii<interactions.size(); ii++) {
 	interaction i = interactions[ii];
 	float pf_fraction = 
-	    (i.p0->p_d2 + i.p1->p_d2) *
-	    spiky_grad(i.distance, fluid.smoothing_radius);
+	    (i.p0->p_d2 + i.p1->p_d2)
+	    * spiky_grad(i.distance, f.smoothing_radius);
 	float vf_fraction = 
-	    fluid.dynamic_viscosity *
-	    (particle_velocity(i.p0)- particle_velocity(i.p1)).length() *
-	    viscy_lapl(i.distance, fluid.smoothing_radius);
+	    f.dynamic_viscosity * 20000
+	    * (particle_velocity(i.p0)- particle_velocity(i.p1)).length()
+	    * viscy_lapl(i.distance, f.smoothing_radius);
 	dir = i.direction;
 	i.p0->pforce += (dir *= pf_fraction);
 	i.p1->pforce -= dir;
@@ -204,11 +207,9 @@ void compute_apply_forces(std::vector<interaction> interactions, fluid fluid)
 	i.p0->vforce += (dir *= vf_fraction);
 	i.p1->vforce -= dir;
     }
-    for (long pi=0; pi<fluid.particle_count; pi++) {
-	particle* pp = fluid.particles+pi;
+    for (particle* pp=f.particles; pp<f.particles + f.particle_count; pp++) {
 	pp->rigid_body->applyCentralForce(pp->pforce + pp->vforce);
-	// printf("Samples = %lu, Density = %f, particle_mass = %f\n",
-	//        pp->samples, pp->density, fluid.particle_mass);
+	// printf("Samples = %lu, density = %f\n", pp->samples, pp->density/f.density);
     }
 }
 
@@ -218,7 +219,7 @@ void apply_sph(fluid_sim fsim)
     std::vector<interaction> interactions = collect_interactions(fsim.lpg);
     compute_densities(interactions, fsim.lpg.step);
     compute_pressures(fsim.f);
-    compute_apply_forces(interactions, fsim.f);
+    apply_forces(interactions, fsim.f);
 }
 
 void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
@@ -240,15 +241,19 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     int max_samples = 0;
     float max_density = 0;
     for(particle* pp=f->particles; pp<f->particles + f->particle_count; pp++) {
-	if (pp->samples > max_samples) max_samples = pp->samples;
-	if (pp->density > max_density) max_density = pp->density;
+	if (pp->samples > max_samples) {
+	    max_samples = pp->samples;
+	    max_density = pp->density;
+	}
     }
     f->max_samples = max_samples;
+    f->avg_density_fraction = max_density / max_samples;
     f->density_factor = f->density / (max_density * f->particle_mass);
 
-    printf("FLUID ADJUSTMENT info:\n");
+    printf("FLUID ADJUSTMENT INFO:\n");
     printf("dt = %f\n", f->dt);
     printf("tait_b = %f\n", f->tait_b);
+    printf("max_density = %f\n", max_density);
     printf("max_samples = %d\n", max_samples);
     printf("density_factor = %f\n\n", f->density_factor);
 }

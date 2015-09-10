@@ -8,19 +8,19 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 1
-#define FRAME_DT 0.01
+#define STEPS 150
+#define FRAME_DT 0.05
 #define PARTICLES 10000
 
 // Global parameters
 char output_dir[] = "/home/agspathis/diplom/frames";
 char obj_filename[] = "/home/agspathis/diplom/models/obj/box-small.obj";
-aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(5, 5, 5) };
+aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(2, 8, 10) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
-    fluid_sim* fsimp = (fluid_sim*) dynamics_world->getWorldUserInfo();
-    update_lp_grid(fsimp->lpg);
-    // apply_sph(fsimp);
+    fluid_sim fsim = *((fluid_sim*) dynamics_world->getWorldUserInfo());
+    update_lp_grid(fsim.lpg);
+    apply_sph(fsim);
 }
 
 int main (void)
@@ -48,13 +48,12 @@ int main (void)
 	dynamics_world->addRigidBody(fluid.particles[pi].rigid_body);
 
     lp_grid lp_grid = make_lp_grid(terrain.taabb, fluid);
-    
+
+    adjust_fluid(&fluid, lp_grid, fluid_aabb, terrain.taabb);
     fluid_sim fluid_sim;
     fluid_sim.f = fluid;
     fluid_sim.lpg = lp_grid;
-
     dynamics_world->setInternalTickCallback(tick_callback, (void*) &fluid_sim);
-    adjust_fluid(&fluid, lp_grid, fluid_aabb, terrain.taabb);
 
     // change to and clear output directory
     chdir(output_dir);

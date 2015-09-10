@@ -81,7 +81,7 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
     // Grid parameter initialization/allocation
     lp_grid lpg; long i,j,k;
     allocate_lp_grid(&lpg, domain, fluid);
-    printf("LP_GRID info:\n");
+    printf("LP_GRID INFO:\n");
     printf("x=%lu, y=%lu, z=%lu\n", lpg.x, lpg.y, lpg.z);
     printf("xss=%lu, yss=%lu, zss=%lu\n", lpg.xss, lpg.yss, lpg.zss);
     printf("cell_count=%lu\n", lpg.cell_count);

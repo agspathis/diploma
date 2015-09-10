@@ -102,12 +102,14 @@ terrain make_terrain_obj(char* filename)
 	(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     btRigidBody::btRigidBodyConstructionInfo t_ci
 	(0, t_motion_state, t.shape, btVector3(0, 0, 0));
-    t_ci.m_restitution = 0.8;	// fluid adhesion to terrain
+    // t_ci.m_restitution = 0.8;	// fluid adhesion to terrain
     t.rigid_body = new btRigidBody(t_ci);
 
     // print terrain aabb
-    printf("TERRAIN info:\n");
+    printf("TERRAIN INFO:\n");
     print_aabb(t.taabb);
+    printf("vertex_count = %lu\n", m.vertex_count);
+    printf("face_count = %lu\n", m.face_count);
     printf("\n");
 
     delete_model(m);

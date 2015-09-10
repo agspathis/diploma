@@ -69,7 +69,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 	    }
 
     // print fluid info
-    printf("FLUID info:\n");
+    printf("FLUID INFO:\n");
     printf("particle_mass = %f\n", f.particle_mass);
     printf("particle_radius = %f\n", f.particle_radius);
     printf("particle_count = %lu\n", f.particle_count);

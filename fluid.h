@@ -7,7 +7,7 @@
 #define TAIT_GAMMA 7
 #define WATER_DENSITY 1000
 #define WATER_DV 0.001
-#define MAX_DENSITY_FLUCTUATION 0.1
+#define MAX_DENSITY_FLUCTUATION 1
 
 struct particle {
     long id;
@@ -28,16 +28,17 @@ struct particle {
 struct fluid {
     /* set in construction */
     float density;
+    long particle_count;
     float particle_mass;
     float particle_radius;
     float dynamic_viscosity;
-    long particle_count;
     float smoothing_radius;
     /* set in calibration */
     float dt;
     float tait_b;
     int max_samples;
     float density_factor;
+    float avg_density_fraction;
     /* fluid data */
     btCollisionShape* fp_shape;
     particle* particles;

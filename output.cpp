@@ -1,12 +1,12 @@
 #include "output.h"
 
-void vtk_export_particles(char* output_dir, fluid fluid, long frame)
+void vtk_export_particles(char* output_dir, fluid f, long frame)
 {
     chdir(output_dir);
     char filename[sizeof "particles_000000.vtk"];
     sprintf(filename, "particles_%06d.vtk", frame);
     FILE* vtk = fopen(filename, "w");
-    long size = fluid.particle_count;
+    long size = f.particle_count;
 
     // standard header
     fprintf(vtk,"# vtk DataFile Version 3.1\n");
@@ -16,7 +16,7 @@ void vtk_export_particles(char* output_dir, fluid fluid, long frame)
 
     // point location
     fprintf(vtk, "POINTS %lu FLOAT\n", size);
-    for (particle* pp=fluid.particles; pp<fluid.particles+size; pp++) {
+    for (particle* pp=f.particles; pp<f.particles+size; pp++) {
 	btVector3 position = particle_position(pp);
 	fprintf(vtk, "%f %f %f\n", position.getX(), position.getY(), position.getZ());
     }
@@ -33,24 +33,29 @@ void vtk_export_particles(char* output_dir, fluid fluid, long frame)
     // point data
     fprintf(vtk, "POINT_DATA %lu\n", size);
     fprintf(vtk, "VECTORS pressure DOUBLE\n");
-    // fprintf(vtk, "LOOKUP_TABLE default\n");
-    for (particle* pp=fluid.particles; pp<fluid.particles+size; pp++) {
+    for (particle* pp=f.particles; pp<f.particles+size; pp++) {
 	btVector3 pforce = pp->pforce;
 	fprintf(vtk, "%f %f %f\n",
-		pforce.getX() / fluid.particle_mass,
-		pforce.getY() / fluid.particle_mass,
-		pforce.getZ() / fluid.particle_mass);
+		pforce.getX() / f.particle_mass,
+		pforce.getY() / f.particle_mass,
+		pforce.getZ() / f.particle_mass);
     }
     fprintf(vtk, "\n");
 
     fprintf(vtk, "VECTORS viscosity DOUBLE\n");
-    // fprintf(vtk, "LOOKUP_TABLE default\n");
-    for (particle* pp=fluid.particles; pp<fluid.particles+size; pp++) {
+    for (particle* pp=f.particles; pp<f.particles+size; pp++) {
 	btVector3 vforce = pp->vforce;
 	fprintf(vtk, "%f %f %f\n",
-		vforce.getX() / fluid.particle_mass,
-		vforce.getY() / fluid.particle_mass,
-		vforce.getZ() / fluid.particle_mass);
+		vforce.getX() / f.particle_mass,
+		vforce.getY() / f.particle_mass,
+		vforce.getZ() / f.particle_mass);
+    }
+    fprintf(vtk, "\n");
+
+    fprintf(vtk, "SCALARS density DOUBLE\n");
+    fprintf(vtk, "LOOKUP_TABLE default\n");
+    for (particle* pp=f.particles; pp<f.particles+size; pp++) {
+	fprintf(vtk, "%f\n", pp->density/f.density);
     }
     fprintf(vtk, "\n");
 
