@@ -13,9 +13,9 @@
 #define PARTICLES 10000
 
 // Global parameters
-char output_dir[] = "/home/agspathis/diplom/frames";
-char obj_filename[] = "/home/agspathis/diplom/models/obj/box-small.obj";
-aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(2, 8, 10) };
+const char* output_dir = "/home/agspathis/diplom/frames";
+const char* obj_filename = "/home/agspathis/diplom/models/obj/the-city.obj";
+aabb fluid_aabb = { btVector3(0, 0, 10), btVector3(5, 10, 80) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim fsim = *((fluid_sim*) dynamics_world->getWorldUserInfo());

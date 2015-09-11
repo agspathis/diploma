@@ -48,11 +48,16 @@ float viscy_lapl(float r, float h)
 }
 
 // equation of state
-float tait(float density, fluid fluid)
+float tait(float density, fluid f)
 {
-    return fluid.tait_b * (pow((density*fluid.particle_mass) / fluid.density,
-			       TAIT_GAMMA)
-			   -1);
+    return f.tait_b * (pow((density*f.particle_mass) / f.density,
+			   TAIT_GAMMA)
+		       -1);
+}
+
+float ideal(float density, fluid f)
+{
+    return f.ideal_k * (density - f.density);
 }
 
 void clear_particle_data(lp_grid lpg)
@@ -182,7 +187,7 @@ void compute_pressures(fluid f)
     for(particle* pp=f.particles; pp<f.particles+f.particle_count; pp++) {
 	pp->density += (f.max_samples - pp->samples) * f.avg_density_fraction;
 	pp->density *= f.particle_mass * f.density_factor;
-	pp->pressure = tait(pp->density, f);
+	pp->pressure = ideal(pp->density, f);
 	pp->p_d2 = pp->pressure / pow(pp->density, 2);
     }
 }
@@ -197,7 +202,7 @@ void apply_forces(std::vector<interaction> interactions, fluid f)
 	    (i.p0->p_d2 + i.p1->p_d2)
 	    * spiky_grad(i.distance, f.smoothing_radius);
 	float vf_fraction = 
-	    f.dynamic_viscosity * 20000
+	    f.dynamic_viscosity
 	    * (particle_velocity(i.p0)- particle_velocity(i.p1)).length()
 	    * viscy_lapl(i.distance, f.smoothing_radius);
 	dir = i.direction;
@@ -228,6 +233,7 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     float v_max = sqrt(2 * G * height);
     float cs = v_max / sqrt(MAX_DENSITY_FLUCTUATION);
     f->tait_b = (f->density) * pow(cs, 2) / TAIT_GAMMA;
+    f->ideal_k = 2000;
 
     // dt to match MAX_DENSITY_FLUCTUATION between ticks
     f->dt = MAX_DENSITY_FLUCTUATION * f->particle_radius / v_max;

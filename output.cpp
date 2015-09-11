@@ -1,6 +1,6 @@
 #include "output.h"
 
-void vtk_export_particles(char* output_dir, fluid f, long frame)
+void vtk_export_particles(const char* output_dir, fluid f, long frame)
 {
     chdir(output_dir);
     char filename[sizeof "particles_000000.vtk"];
@@ -59,5 +59,17 @@ void vtk_export_particles(char* output_dir, fluid f, long frame)
     }
     fprintf(vtk, "\n");
 
+    fclose(vtk);
+}
+
+void obj_export_model(char* output_dir, model m)
+{
+    chdir(output_dir);
+    FILE* vtk = fopen("terrain.obj", "w");
+    fprintf(vtk, "o terrain\n");
+    for (vertex* vp=m.vertices; vp<m.vertices + m.vertex_count; vp++)
+	fprintf(vtk, "v %f %f %f\n", vp->getX(), vp->getY(), vp->getZ());
+    for (face* fp=m.faces; fp<m.faces + m.face_count; fp++)
+	fprintf(vtk, "f %d %d %d\n", fp->v0i+1, fp->v1i+1, fp->v2i+1);
     fclose(vtk);
 }

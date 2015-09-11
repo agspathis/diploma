@@ -36,6 +36,7 @@ struct fluid {
     /* set in calibration */
     float dt;
     float tait_b;
+    float ideal_k;
     int max_samples;
     float density_factor;
     float avg_density_fraction;

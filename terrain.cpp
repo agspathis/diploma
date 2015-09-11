@@ -1,26 +1,9 @@
 #include "utilities.h"
 #include "terrain.h"
 
-struct face {
-    long v0i, v1i, v2i;
-};
+#define TERRAIN_SCALING_FACTOR 0.04
 
-struct model {
-    long vertex_count;
-    long face_count;
-    btVector3* vertices;
-    face* faces;
-    aabb maabb;
-};
-
-int delete_model(model m)
-{
-    free(m.vertices);
-    free(m.faces);
-    return 0;
-}
-
-model read_obj(char* filename)
+model read_obj(const char* filename)
 {
     model m;
     float x_min = +FLT_MAX, y_min = +FLT_MAX, z_min = +FLT_MAX;
@@ -45,7 +28,7 @@ model read_obj(char* filename)
 	default: continue;
 	};
     }
-    m.vertices = (btVector3*) malloc(vertex_count * sizeof(btVector3));
+    m.vertices = (vertex*) malloc(vertex_count * sizeof(vertex));
     m.faces = (face*) malloc(face_count * sizeof(face));
     m.vertex_count = vertex_count;
     m.face_count = face_count;
@@ -83,17 +66,38 @@ model read_obj(char* filename)
     return m;
 }
 
-terrain make_terrain_obj(char* filename)
+// reposition the model such that T.TAABB.MIN = (0, 0, 0)
+void dock_scale_model(model* m, float factor)
+{
+    vertex min = m->maabb.min;
+    for (vertex* vp=m->vertices; vp<m->vertices + m->vertex_count; vp++) {
+	*vp -= min;
+	*vp *= factor;
+    }
+    m->maabb.min -= min;
+    m->maabb.min *= factor;
+    m->maabb.max -= min;
+    m->maabb.max *= factor;
+}
+
+void delete_model(model m)
+{
+    free(m.vertices);
+    free(m.faces);
+}
+
+terrain make_terrain_obj(const char* filename)
 {
     terrain t;
     model m = read_obj(filename);
+    dock_scale_model(&m, TERRAIN_SCALING_FACTOR);
     t.taabb = m.maabb;
     t.triangle_mesh = new btTriangleMesh();
     for(long fi=0; fi<m.face_count; fi++) {
-	face f = m.faces[fi];
-	t.triangle_mesh->addTriangle(m.vertices[f.v0i],
-				     m.vertices[f.v1i],
-				     m.vertices[f.v2i]);
+    	face f = m.faces[fi];
+    	t.triangle_mesh->addTriangle(m.vertices[f.v0i],
+    				     m.vertices[f.v1i],
+    				     m.vertices[f.v2i]);
     }
 
     // construct rigid body for simulation
@@ -116,13 +120,12 @@ terrain make_terrain_obj(char* filename)
     return t;
 }
 
-int delete_terrain(terrain t)
+void delete_terrain(terrain t)
 {
     delete t.shape;
     delete t.triangle_mesh;
     delete t.rigid_body->getMotionState();
     delete t.rigid_body;
-    return 0;
 }
 
 float aabb_volume(aabb aabb)
