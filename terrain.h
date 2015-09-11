@@ -1,13 +1,20 @@
 #ifndef TERRAIN_H
 #define TERRAIN_H
 
+#include <stdint.h>
 #include <btBulletDynamicsCommon.h>
 
-typedef btVector3 vertex;
+// typedef btVector3 vertex;
 
 struct aabb {
     btVector3 min;
     btVector3 max;
+};
+
+struct vertex {
+    float x;
+    float y;
+    float z;
 };
 
 struct face {
@@ -16,18 +23,12 @@ struct face {
     long v2i;
 };
 
-struct model {
+struct terrain {
+    aabb taabb;
     long vertex_count;
     long face_count;
     vertex* vertices;
     face* faces;
-    aabb maabb;
-};
-
-struct terrain {
-    long vertex_count;
-    long face_count;
-    aabb taabb;
     btTriangleMesh* triangle_mesh;
     btCollisionShape* shape;
     btRigidBody* rigid_body;
@@ -35,7 +36,7 @@ struct terrain {
 
 float aabb_volume(aabb aabb);
 
-terrain make_terrain_obj(const char* filename);
+terrain make_terrain_obj(const char* filename, float scale_factor);
 
 void delete_terrain(terrain t);
 

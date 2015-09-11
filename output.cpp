@@ -62,14 +62,14 @@ void vtk_export_particles(const char* output_dir, fluid f, long frame)
     fclose(vtk);
 }
 
-void obj_export_model(char* output_dir, model m)
+void obj_export_terrain(const char* output_dir, terrain t)
 {
     chdir(output_dir);
     FILE* vtk = fopen("terrain.obj", "w");
     fprintf(vtk, "o terrain\n");
-    for (vertex* vp=m.vertices; vp<m.vertices + m.vertex_count; vp++)
-	fprintf(vtk, "v %f %f %f\n", vp->getX(), vp->getY(), vp->getZ());
-    for (face* fp=m.faces; fp<m.faces + m.face_count; fp++)
+    for (vertex* vp=t.vertices; vp<t.vertices + t.vertex_count; vp++)
+	fprintf(vtk, "v %f %f %f\n", vp->x, vp->y, vp->z);
+    for (face* fp=t.faces; fp<t.faces + t.face_count; fp++)
 	fprintf(vtk, "f %d %d %d\n", fp->v0i+1, fp->v1i+1, fp->v2i+1);
     fclose(vtk);
 }

@@ -11,6 +11,7 @@
 #define STEPS 150
 #define FRAME_DT 0.05
 #define PARTICLES 10000
+#define TERRAIN_SCALING_FACTOR 0.04
 
 // Global parameters
 const char* output_dir = "/home/agspathis/diplom/frames";
@@ -40,7 +41,7 @@ int main (void)
     dynamics_world->setGravity(btVector3(0, -G, 0));
 
     // terrain, fluid, lp_grid and fluid_sim construction
-    terrain terrain = make_terrain_obj(obj_filename);
+    terrain terrain = make_terrain_obj(obj_filename, TERRAIN_SCALING_FACTOR);
     dynamics_world->addRigidBody(terrain.rigid_body);
 
     fluid fluid = make_fluid(fluid_aabb, PARTICLES);
@@ -58,6 +59,9 @@ int main (void)
     // change to and clear output directory
     chdir(output_dir);
     system("exec rm *");
+
+    // export docked/scaled terrain
+    obj_export_terrain(output_dir, terrain);
 
     // simulation
     for (int step=0; step<STEPS; step++) {
