@@ -8,7 +8,7 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 150
+#define STEPS 1
 #define FRAME_DT 0.05
 #define PARTICLES 10000
 #define TERRAIN_SCALING_FACTOR 0.04

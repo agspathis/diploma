@@ -7,7 +7,7 @@ terrain read_obj(const char* filename)
     float x_min = +FLT_MAX, y_min = +FLT_MAX, z_min = +FLT_MAX;
     float x_max = -FLT_MAX, y_max = -FLT_MAX, z_max = -FLT_MAX;
     float vx, vy, vz;		// vertex coordinates
-    long i, j, k;		// face vertex indices
+    long fi, fj, fk;		// face vertex indices
     long vertex_count=0, face_count=0;
     char line[128];
     FILE* obj;
@@ -31,8 +31,8 @@ terrain read_obj(const char* filename)
     t.vertex_count = vertex_count;
     t.face_count = face_count;
 
-    vertex_count = face_count = 0;
     rewind(obj);
+    vertex_count = face_count = 0;
     while (fgets(line, 128, obj)) {
 	switch (line[0]) {
 	case 'v':
@@ -49,10 +49,10 @@ terrain read_obj(const char* filename)
 	    vertex_count++;
 	    break;
 	case 'f':
-	    sscanf(&line[1],"%d %d %d", &i, &j, &k);
-	    t.faces[face_count].v0i = i-1;
-	    t.faces[face_count].v1i = j-1;
-	    t.faces[face_count].v2i = k-1;
+	    sscanf(&line[1],"%ld %ld %ld", &fi, &fj, &fk);
+	    t.faces[face_count].v0i = fi-1;
+	    t.faces[face_count].v1i = fj-1;
+	    t.faces[face_count].v2i = fk-1;
 	    face_count++;
 	    break;
 	default:
@@ -90,14 +90,16 @@ terrain make_terrain_obj(const char* filename, float scale_factor)
     terrain t = read_obj(filename);
     dock_scale_terrain(&t, scale_factor);
     t.triangle_mesh = new btTriangleMesh();
-    for(face* fp=t.faces; fp<t.faces + t.face_count; fp++) {
-	vertex v0 = t.vertices[fp->v0i];
-	vertex v1 = t.vertices[fp->v1i];
-	vertex v2 = t.vertices[fp->v2i];
-    	t.triangle_mesh->addTriangle(btVector3(v0.x, v0.y, v0.z),
-				     btVector3(v1.x, v1.y, v1.z),
-				     btVector3(v2.x, v2.y, v2.z));
-    }
+    for(face* fp=t.faces; fp<t.faces + t.face_count; fp++)
+    	t.triangle_mesh->addTriangle(btVector3(t.vertices[fp->v0i].x,
+					       t.vertices[fp->v0i].y,
+					       t.vertices[fp->v0i].z),
+				     btVector3(t.vertices[fp->v1i].x,
+					       t.vertices[fp->v1i].y,
+					       t.vertices[fp->v1i].z),
+				     btVector3(t.vertices[fp->v2i].x,
+					       t.vertices[fp->v2i].y,
+					       t.vertices[fp->v2i].z));
 
     // construct rigid body for simulation
     t.shape = new btBvhTriangleMeshShape(t.triangle_mesh, true);
