@@ -44,7 +44,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 	    for (i=0; (x = (2*i + ((j+k)%2)) * f.particle_radius) < dx; i++)
 		f.particle_count++;
     f.particle_mass = (volume * f.density)/f.particle_count;
-    
+
     // F.SMOOTHING_RADIUS for about 50 smoothing samples
     f.smoothing_radius = 4.2 * f.particle_radius;
     f.particles = (particle*) malloc(f.particle_count * sizeof(particle));

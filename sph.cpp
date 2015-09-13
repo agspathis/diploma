@@ -3,58 +3,38 @@
 
 #include "sph.h"
 
-// density kernel
-float poly_6(float r, float h)
+// density kernel (poly 6)
+float dens_k(float r, float h)
 {
-    float result = 0;
-    // if (r<h) result = (315/(64*M_PI*pow(h, 9)))*pow(h*h-r*r, 3);
-    if (r<h) result = pow(h*h-r*r, 3);
-    return result;
+    return pow(h*h-r*r, 3);
 }
 
-// pressure kernel
-float spiky(float r, float h)
+// pressure kernel (spiky)
+float press_k(float r, float h)
 {
-    float result = 0;
-    if (r<h) result = (15/(M_PI*pow(h, 6)))*pow(h-r, 3);
-    return result;
+    return (15/(M_PI*pow(h, 6)))*pow(h-r, 3);
 }
 
-float spiky_grad(float r, float h)
+float press_kg(float r, float h) // gradient
 {
-    float result = 0;
-    if (r<h) result = (-45/(M_PI*pow(h, 6))) * pow((h-r), 2);
-    // if (r<h) result = pow((h-r), 2);
-    return result;
+    return (-45/(M_PI*pow(h, 6))) * pow((h-r), 2);
 }
 
 // viscosity kernel
-float viscy(float r, float h)
+float visc_k(float r, float h)
 {
-    float result = 0;
-    if (r<h) result = (15/(2*M_PI*pow(h, 3)))*(-(pow(r, 3)/(2*pow(h, 3)))
-					       +(pow(r, 2)/(pow(h, 2)))
-					       +(h/(2*r))
-					       - 1);
-    return result;
+    return (15/(2*M_PI*pow(h, 3)))*(-(pow(r, 3)/(2*pow(h, 3)))
+				    +(pow(r, 2)/(pow(h, 2)))
+				    +(h/(2*r))
+				    - 1);
 }
 
-float viscy_lapl(float r, float h)
+float visc_kl(float r, float h) // laplacian
 {
-    float result = 0;
-    // if (r<h) result = (45/(M_PI*pow(h, 6))) * (h-r);
-    if (r<h) result = (h-r);
-    return result;
+    return (45/(M_PI*pow(h, 6))) * (h-r);
 }
 
 // equation of state
-float tait(float density, fluid f)
-{
-    return f.tait_b * (pow((density*f.particle_mass) / f.density,
-			   TAIT_GAMMA)
-		       -1);
-}
-
 float ideal(float density, fluid f)
 {
     return f.ideal_k * (density - f.density);
@@ -92,7 +72,7 @@ void get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi,
     neighbour_cells[10] = get_cell(lpg, xi  , yi-1, zi  );
     neighbour_cells[11] = get_cell(lpg, xi+1, yi-1, zi  );
     neighbour_cells[12] = get_cell(lpg, xi-1, yi  , zi  );
-    
+
     for(int nci=0; nci<13; nci++)
 	for(anchor a=neighbour_cells[nci].start; a<neighbour_cells[nci].end; a++)
 	    neighbours.push_back(*a);
@@ -109,9 +89,9 @@ void collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, lo
     long tzi = std::min((zsi+1)*lpg.zss, lpg.z);
     std::vector<particle*> neighbours;
     std::vector<interaction> segment_interactions;
-    for (long xi=ixi; xi<txi; xi++) 
-	for (long yi=iyi; yi<tyi; yi++) 
-	    for (long zi=izi; zi<tzi; zi++) {
+    for (long zi=izi; zi<tzi; zi++)
+	for (long yi=iyi; yi<tyi; yi++)
+	    for (long xi=ixi; xi<txi; xi++) {
 		cell ccell = get_cell(lpg, xi, yi, zi);
 		get_neighbour_cells(lpg, xi, yi, zi, neighbours);
 		anchor cca = ccell.start; // cca = center cell anchor
@@ -173,7 +153,7 @@ std::vector<interaction> collect_interactions(lp_grid lpg)
 void compute_densities(std::vector<interaction> interactions, float smoothing_radius)
 {
     for(long ii=0; ii<interactions.size(); ii++) {
-	float density_fraction = poly_6(interactions[ii].distance, smoothing_radius);
+	float density_fraction = dens_k(interactions[ii].distance, smoothing_radius);
 	interactions[ii].p0->density += density_fraction;
 	interactions[ii].p0->samples++;
 	interactions[ii].p1->density += density_fraction;
@@ -185,8 +165,9 @@ void compute_densities(std::vector<interaction> interactions, float smoothing_ra
 void compute_pressures(fluid f)
 {
     for(particle* pp=f.particles; pp<f.particles+f.particle_count; pp++) {
-	pp->density += (f.max_samples - pp->samples) * f.avg_density_fraction;
+	// pp->density += (f.max_samples - pp->samples) * f.avg_density_fraction;
 	pp->density *= f.particle_mass * f.density_factor;
+	if (pp->samples < (0.95 * f.max_samples)) pp->density = f.density;
 	pp->pressure = ideal(pp->density, f);
 	pp->p_d2 = pp->pressure / pow(pp->density, 2);
     }
@@ -198,13 +179,13 @@ void apply_forces(std::vector<interaction> interactions, fluid f)
     btVector3 dir;
     for (long ii=0; ii<interactions.size(); ii++) {
 	interaction i = interactions[ii];
-	float pf_fraction = 
+	float pf_fraction =
 	    (i.p0->p_d2 + i.p1->p_d2)
-	    * spiky_grad(i.distance, f.smoothing_radius);
-	float vf_fraction = 
+	    * press_kg(i.distance, f.smoothing_radius);
+	float vf_fraction =
 	    f.dynamic_viscosity
 	    * (particle_velocity(i.p0)- particle_velocity(i.p1)).length()
-	    * viscy_lapl(i.distance, f.smoothing_radius);
+	    * visc_kl(i.distance, f.smoothing_radius);
 	dir = i.direction;
 	i.p0->pforce += (dir *= pf_fraction);
 	i.p1->pforce -= dir;
@@ -227,17 +208,17 @@ void apply_sph(fluid_sim fsim)
     apply_forces(interactions, fsim.f);
 }
 
+// adjust fluid to terrain, compute sph parameters
 void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
 {
     float height = faabb.max.getY() - taabb.min.getY();
     float v_max = sqrt(2 * G * height);
     float cs = v_max / sqrt(MAX_DENSITY_FLUCTUATION);
-    f->tait_b = (f->density) * pow(cs, 2) / TAIT_GAMMA;
     f->ideal_k = 2000;
 
     // dt to match MAX_DENSITY_FLUCTUATION between ticks
     f->dt = MAX_DENSITY_FLUCTUATION * f->particle_radius / v_max;
-    
+
     // measure and store max density and samples in the initial fluid
     // configuration in order to ajust later sph computations
     clear_particle_data(lpg);
@@ -258,8 +239,63 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
 
     printf("FLUID ADJUSTMENT INFO:\n");
     printf("dt = %f\n", f->dt);
-    printf("tait_b = %f\n", f->tait_b);
     printf("max_density = %f\n", max_density);
     printf("max_samples = %d\n", max_samples);
     printf("density_factor = %f\n\n", f->density_factor);
+}
+
+// color field computation
+float cell_cf_fraction(lp_grid lpg, long i, long j, long k, btVector3 cpos)
+{
+    float cf_fraction = 0;
+    cell c = get_cell(lpg, i, j, k);
+    for (anchor anc=c.start; anc<c.end; anc++) {
+	float distance = (particle_position(*anc) - cpos).length();
+	if (distance < lpg.step)
+	    cf_fraction += dens_k(distance, lpg.step);
+    }
+    return cf_fraction;
+}
+
+void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
+{
+    float cf;
+    long ixi = xsi*lpg.xss;
+    long iyi = ysi*lpg.yss;
+    long izi = zsi*lpg.zss;
+    long txi = std::min((xsi+1)*lpg.xss, lpg.x);
+    long tyi = std::min((ysi+1)*lpg.yss, lpg.y);
+    long tzi = std::min((zsi+1)*lpg.zss, lpg.z);
+    for (long xi=ixi; xi<txi; xi++)
+	for (long yi=iyi; yi<tyi; yi++)
+	    for (long zi=izi; zi<tzi; zi++) {
+		cf = 0;
+		btVector3 cpos = btVector3(xi*lpg.step, yi*lpg.step, zi*lpg.step);
+		// sum contribution of the 8 cells surrounding CPOS
+		cf += cell_cf_fraction(lpg, xi-1, yi-1, zi-1, cpos);
+		cf += cell_cf_fraction(lpg, xi-1, yi-1, zi  , cpos);
+		cf += cell_cf_fraction(lpg, xi-1, yi  , zi-1, cpos);
+		cf += cell_cf_fraction(lpg, xi-1, yi  , zi  , cpos);
+		cf += cell_cf_fraction(lpg, xi  , yi-1, zi-1, cpos);
+		cf += cell_cf_fraction(lpg, xi  , yi-1, zi  , cpos);
+		cf += cell_cf_fraction(lpg, xi  , yi  , zi-1, cpos);
+		cf += cell_cf_fraction(lpg, xi  , yi  , zi  , cpos);
+		lpg.color_field[linearize(lpg, xi, yi, zi)] = cf;
+	    }
+
+}
+
+void compute_cf(float* cf, lp_grid lpg)
+{
+    long ti = 0;
+    long xs_count = 1+lpg.x/lpg.xss;
+    long ys_count = 1+lpg.y/lpg.yss;
+    long zs_count = 1+lpg.z/lpg.zss;
+    long thread_count = xs_count*ys_count*zs_count;
+    std::thread threads[thread_count];
+    for (long xsi=0; xsi<xs_count; xsi++)
+	for (long ysi=0; ysi<ys_count; ysi++)
+	    for (long zsi=0; zsi<zs_count; zsi++, ti++)
+		threads[ti] = std::thread(compute_cf_segment, lpg, xsi, ysi, zsi);
+    for (long ti=0; ti<thread_count; ti++) threads[ti].join();
 }

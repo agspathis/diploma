@@ -35,6 +35,10 @@ typedef particle** anchor;
 		    has PARTICLE_COUNT+1 elements. The extra last slot is used
 		    for loop termination conditions and valid PARTICLE_RANGE for
 		    the last cell (containing out-of-grid particles).
+ COLOR_FIELD      : Array containing the samples of the scalar color field
+                    (color = dimensionless density), which are computed at the
+		    minimum vertex of each cell (cube). The isosurface at an
+		    appropriate value is a good estimation of fluid surface.
 */
 struct lp_grid {
     btVector3 origin;
@@ -45,6 +49,7 @@ struct lp_grid {
     anchor** map;
     anchor* anchors;
     particle** particles;
+    float* color_field;
 };
 
 lp_grid make_lp_grid(aabb domain, fluid fluid);
@@ -62,6 +67,8 @@ struct cell {
     anchor start;
     anchor end;
 };
+
+long linearize (lp_grid lpg, long i, long j, long k);
 
 cell get_cell(lp_grid lpg, long i, long j, long k);
 

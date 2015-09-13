@@ -11,17 +11,19 @@ using CGAL::Point_3;
 typedef Cartesian<long> Kernel;
 typedef Point_3<Kernel> Point;
 
+// Implements standard x-major linear indexing (following vtk's choice of
+// x-major indexing in structured_points dataset format). If any index is out of
+// bounds in any of the 3 dimensions of the grid the linear address
+// (LPG.CELL_COUNT) of the last cell containing the off-grid particles is
+// returned.
 long linearize (lp_grid lpg, long i, long j, long k)
 {
-    // if any index is out of bounds in any of the 3 dimensions of the grid the
-    // linear address (LPG.CELL_COUNT) of the last cell containing the off-grid
-    // particles is returned
     if (i<0 || i>=lpg.x || j<0 || j>=lpg.y || k<0 || k>=lpg.z)
 	return lpg.cell_count;
-    else return (i*lpg.y*lpg.z + j*lpg.z + k);
+    else return (i + j*lpg.x + k*lpg.x*lpg.y);
 }
 
-anchor* particle_anchor (lp_grid lpg, particle* pp)
+anchor* particle_anchor(lp_grid lpg, particle* pp)
 {
     btVector3 relative_position = particle_position(pp) - lpg.origin;
     long i = floor(relative_position.getX()/lpg.step);
@@ -30,17 +32,14 @@ anchor* particle_anchor (lp_grid lpg, particle* pp)
     return lpg.map[linearize(lpg, i, j, k)];
 }
 
-// Letters in abbreviations "ia", "tp" etc. throughout this file stand for
-// i=initial, t=terminal/target, a=anchor pointer, p=particle pointer
+// Letters 'i', 't' stand for 'initial' and 'terminal/target' respectively
 void insert_particle(lp_grid lpg, particle* pp)
 {
     anchor* ta = particle_anchor(lpg, pp);
     anchor tp = *(ta+1);
-    for (anchor p=lpg.particles+lpg.particle_count; p>tp; p--)
-	*p = *(p-1);
+    for (anchor p=lpg.particles+lpg.particle_count; p>tp; p--) *p = *(p-1);
+    for (anchor* a=ta+1; a<=lpg.anchors+lpg.cell_count; a++) (*a)++;
     *tp = pp;
-    for (anchor* a=ta+1; a<=lpg.anchors+lpg.cell_count; a++)
-	(*a)++;
 }
 
 int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
@@ -59,9 +58,10 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
 			    domain.min.getZ() - lpg->step/2);
 
     // Allocate memory for the 3 arrays
-    lpg->map	    = (anchor**) malloc((lpg->cell_count+1) * sizeof(anchor*));
-    lpg->anchors    = (anchor*) malloc((lpg->cell_count+1) * sizeof(anchor));
-    lpg->particles  = (anchor) malloc ((lpg->particle_count+1) * sizeof(particle*));
+    lpg->map		= (anchor**) malloc((lpg->cell_count+1) * sizeof(anchor*));
+    lpg->anchors	= (anchor*) malloc((lpg->cell_count+1) * sizeof(anchor));
+    lpg->particles	= (anchor) malloc ((lpg->particle_count+1) * sizeof(particle*));
+    lpg->color_field	= (float*) malloc ((lpg->cell_count) * sizeof(float));
 
     return 0;
 }
@@ -144,6 +144,7 @@ void delete_lp_grid(lp_grid lpg)
     free(lpg.map);
     free(lpg.anchors);
     free(lpg.particles);
+    free(lpg.color_field);
 }
 
 cell get_cell(lp_grid lpg, long i, long j, long k)

@@ -4,7 +4,6 @@
 #include "terrain.h"
 
 #define G 9.81
-#define TAIT_GAMMA 7
 #define WATER_DENSITY 1000
 #define WATER_DV 0.001
 #define MAX_DENSITY_FLUCTUATION 1
@@ -35,7 +34,6 @@ struct fluid {
     float smoothing_radius;
     /* set in calibration */
     float dt;
-    float tait_b;
     float ideal_k;
     int max_samples;
     float density_factor;

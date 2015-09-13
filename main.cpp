@@ -11,12 +11,12 @@
 #define STEPS 1
 #define FRAME_DT 0.05
 #define PARTICLES 10000
-#define TERRAIN_SCALING_FACTOR 0.04
+#define TERRAIN_SCALING_FACTOR 1
 
 // Global parameters
 const char* output_dir = "/home/agspathis/diplom/frames";
-const char* obj_filename = "/home/agspathis/diplom/models/obj/the-city.obj";
-aabb fluid_aabb = { btVector3(0, 0, 10), btVector3(5, 10, 80) };
+const char* obj_filename = "/home/agspathis/diplom/models/obj/box-small.obj";
+aabb fluid_aabb = { btVector3(0, 2, 2), btVector3(2, 5, 8) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim fsim = *((fluid_sim*) dynamics_world->getWorldUserInfo());
@@ -61,13 +61,13 @@ int main (void)
     system("exec rm *");
 
     // export docked/scaled terrain
-    obj_export_terrain(output_dir, terrain);
+    terrain_to_obj(output_dir, terrain);
 
     // simulation
     for (int step=0; step<STEPS; step++) {
 	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/fluid.dt), fluid.dt);
 	printf("Frame %d / %d\n", step, STEPS-1);
-	vtk_export_particles(output_dir, fluid, step);
+	particles_to_vtk(output_dir, fluid, step);
     }
 
     // cleanup

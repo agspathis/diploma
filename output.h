@@ -4,9 +4,10 @@
 #include <unistd.h>
 
 #include "fluid.h"
+#include "lp_grid.h"
 
-void vtk_export_particles(const char* output_dir, fluid fluid, long frame);
+void particles_to_vtk(const char* output_dir, fluid fluid, long frame);
 
-void obj_export_terrain(const char* output_dir, terrain t);
+void terrain_to_obj(const char* output_dir, terrain t);
 
 #endif

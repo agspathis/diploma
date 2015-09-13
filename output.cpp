@@ -1,6 +1,6 @@
 #include "output.h"
 
-void vtk_export_particles(const char* output_dir, fluid f, long frame)
+void particles_to_vtk(const char* output_dir, fluid f, long frame)
 {
     chdir(output_dir);
     char filename[sizeof "particles_000000.vtk"];
@@ -62,7 +62,7 @@ void vtk_export_particles(const char* output_dir, fluid f, long frame)
     fclose(vtk);
 }
 
-void obj_export_terrain(const char* output_dir, terrain t)
+void terrain_to_obj(const char* output_dir, terrain t)
 {
     chdir(output_dir);
     FILE* vtk = fopen("terrain.obj", "w");
@@ -71,5 +71,31 @@ void obj_export_terrain(const char* output_dir, terrain t)
 	fprintf(vtk, "v %f %f %f\n", vp->x, vp->y, vp->z);
     for (face* fp=t.faces; fp<t.faces + t.face_count; fp++)
 	fprintf(vtk, "f %d %d %d\n", fp->v0i+1, fp->v1i+1, fp->v2i+1);
+    fclose(vtk);
+}
+
+void color_field_to_vtk(const char* output_dir, lp_grid lpg, long frame)
+{
+    chdir(output_dir);
+    char filename[sizeof "color_field_000000.vtk"];
+    sprintf(filename, "color_field_%06d.vtk", frame);
+    FILE* vtk = fopen(filename, "w");
+    long size = lpg.cell_count;
+
+    // standard header
+    fprintf(vtk, "# vtk DataFile Version 3.1\n");
+    fprintf(vtk, "Simulation color field\n");
+    fprintf(vtk, "ASCII\n");
+    fprintf(vtk, "DATASET STRUCTURED_POINTS\n");
+    fprintf(vtk, "DIMENSIONS %ld %ld %ld\n", lpg.x, lpg.y, lpg.z);
+    fprintf(vtk, "ORIGIN %f %f %f\n",
+	    lpg.origin.getX(), lpg.origin.getY(), lpg.origin.getZ());
+    fprintf(vtk, "SPACING %f %f %f\n\n", lpg.step, lpg.step, lpg.step);
+    
+    fprintf(vtk, "POINT_DATA %ld\n", lpg.cell_count);
+    fprintf(vtk, "SCALARS color_field FLOAT\n");
+    fprintf(vtk, "LOOKUP_TABLE default\n");
+    for (long cfi = 0; cfi < lpg.cell_count; cfi++)
+	fprintf(vtk, "%f\n", lpg.color_field[cfi]);
     fclose(vtk);
 }
