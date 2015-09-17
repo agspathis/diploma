@@ -11,6 +11,7 @@ struct interaction {
 };
 
 struct fluid_sim {
+    terrain t;
     fluid f;
     lp_grid lpg;
 };
@@ -18,5 +19,7 @@ struct fluid_sim {
 void apply_sph(fluid_sim fsim);
 
 void adjust_fluid(fluid* fluid, lp_grid lpg, aabb fluid_aabb, aabb terrain_aabb);
+
+void compute_cf(lp_grid lpg);
 
 #endif

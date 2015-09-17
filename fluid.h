@@ -6,7 +6,7 @@
 #define G 9.81
 #define WATER_DENSITY 1000
 #define WATER_DV 0.001
-#define MAX_DENSITY_FLUCTUATION 1
+#define MAX_DENSITY_FLUCTUATION 0.01
 
 struct particle {
     long id;
@@ -34,8 +34,9 @@ struct fluid {
     float smoothing_radius;
     /* set in calibration */
     float dt;
+    float tait_b;
     float ideal_k;
-    int max_samples;
+    float max_samples;
     float density_factor;
     float avg_density_fraction;
     /* fluid data */

@@ -29,7 +29,6 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
     dx = x_max - x_min;
     dy = y_max - y_min;
     dz = z_max - z_min;
-    volume = dx*dy*dz;
 
     // values for water
     f.density = WATER_DENSITY;
@@ -61,7 +60,9 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 		    (btTransform(btQuaternion(0, 0, 0, 1), btVector3(x_min+x, y_min+y, z_min+z)));
 		btRigidBody::btRigidBodyConstructionInfo fp_ci
 		    (f.particle_mass, fp_motion_state, f.fp_shape, fp_inertia);
-		fp_ci.m_restitution = 1.0;
+		fp_ci.m_restitution = 0.0;
+		fp_ci.m_friction = 0.0;
+		fp_ci.m_rollingFriction = 0.0;
 		f.particles[pi].id = pi;
 		f.particles[pi].rigid_body = new btRigidBody(fp_ci);
 		f.particles[pi].rigid_body->setLinearVelocity(btVector3(0, 0, 0));
@@ -77,7 +78,6 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 
     return f;
 }
-
 
 int delete_particle(particle* pp)
 {

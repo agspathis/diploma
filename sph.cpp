@@ -8,35 +8,20 @@ float dens_k(float r, float h)
 {
     return pow(h*h-r*r, 3);
 }
-
-// pressure kernel (spiky)
-float press_k(float r, float h)
-{
-    return (15/(M_PI*pow(h, 6)))*pow(h-r, 3);
-}
-
-float press_kg(float r, float h) // gradient
+// pressure kernel (spiky) gradient
+float press_kg(float r, float h)
 {
     return (-45/(M_PI*pow(h, 6))) * pow((h-r), 2);
 }
-
-// viscosity kernel
-float visc_k(float r, float h)
-{
-    return (15/(2*M_PI*pow(h, 3)))*(-(pow(r, 3)/(2*pow(h, 3)))
-				    +(pow(r, 2)/(pow(h, 2)))
-				    +(h/(2*r))
-				    - 1);
-}
-
-float visc_kl(float r, float h) // laplacian
+// viscosity kernel laplacian
+float visc_kl(float r, float h)
 {
     return (45/(M_PI*pow(h, 6))) * (h-r);
 }
-
 // equation of state
-float ideal(float density, fluid f)
+float eos(float density, fluid f)
 {
+    // return f.tait_b * (pow((density * f.particle_mass) / f.density, 7) - 1);
     return f.ideal_k * (density - f.density);
 }
 
@@ -50,7 +35,6 @@ void clear_particle_data(lp_grid lpg)
 	pp->p_d2 = 0;
 	pp->pforce = btVector3(0, 0, 0);
 	pp->vforce = btVector3(0, 0, 0);
-	pp->rigid_body->clearForces();
     }
 }
 
@@ -81,37 +65,61 @@ void get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi,
 void collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, long sii,
 				   std::vector< std::vector<interaction> > &interactions)
 {
-    long ixi = xsi*lpg.xss;
-    long iyi = ysi*lpg.yss;
-    long izi = zsi*lpg.zss;
-    long txi = std::min((xsi+1)*lpg.xss, lpg.x);
-    long tyi = std::min((ysi+1)*lpg.yss, lpg.y);
-    long tzi = std::min((zsi+1)*lpg.zss, lpg.z);
+    // segment looping limits
+    long ixi = xsi*lpg.xss; long txi = std::min((xsi+1)*lpg.xss, lpg.x);
+    long iyi = ysi*lpg.yss; long tyi = std::min((ysi+1)*lpg.yss, lpg.y);
+    long izi = zsi*lpg.zss; long tzi = std::min((zsi+1)*lpg.zss, lpg.z);
+    // interaction vars
+    cell ccell;			 // center cell
+    anchor cca0, cca1;		 // anchors to p0, p1
+    btVector3 pos0, pos1;	 // positions of p0, p1
+    btVector3 direction;
+    btScalar distance;
+    interaction inter;
     std::vector<particle*> neighbours;
     std::vector<interaction> segment_interactions;
+
     for (long zi=izi; zi<tzi; zi++)
 	for (long yi=iyi; yi<tyi; yi++)
 	    for (long xi=ixi; xi<txi; xi++) {
-		cell ccell = get_cell(lpg, xi, yi, zi);
-		get_neighbour_cells(lpg, xi, yi, zi, neighbours);
-		anchor cca = ccell.start; // cca = center cell anchor
-		while (cca < ccell.end) {
-		    btVector3 pos0 = particle_position(*cca);
-		    // npi = neighbour particle index
-		    for (long npi=0; npi<neighbours.size(); npi++) {
-			btVector3 pos1 = particle_position(neighbours[npi]);
-			btVector3 direction = pos1-pos0;
-			btScalar distance = direction.length();
+		ccell = get_cell(lpg, xi, yi, zi); // ccell = center cell
+		// collect interactions with particles inside center cell
+		cca0 = ccell.start;
+		while (cca0 < ccell.end-1) {
+		    pos0 = particle_position(*cca0);
+		    for (cca1 = cca0+1; cca1 < ccell.end-1; cca1++) {
+			pos1 = particle_position(*cca1);
+			direction = pos1-pos0;
+			distance = direction.length();
 			if (distance < lpg.step) {
-			    interaction interaction;
-			    interaction.p0 = *cca;
-			    interaction.p1 = neighbours[npi];
-			    interaction.distance = distance;
-			    interaction.direction = direction.normalize();
-			    segment_interactions.push_back(interaction);
+			    inter.p0 = *cca0;
+			    inter.p1 = *cca1;
+			    inter.distance = distance;
+			    inter.direction = direction.normalize();
+			    segment_interactions.push_back(inter);
 			}
 		    }
-		    cca++;
+		    cca0++;
+		}
+		// collect interactions with particles in neighboring cells
+		get_neighbour_cells(lpg, xi, yi, zi, neighbours);
+		cca0 = ccell.start;
+		while (cca0 < ccell.end) {
+		    pos0 = particle_position(*cca0);
+		    // npi = neighbour particle index
+		    for (long npi=0; npi<neighbours.size(); npi++) {
+			pos1 = particle_position(neighbours[npi]);
+			direction = pos1-pos0;
+			distance = direction.length();
+			if (distance < lpg.step) {
+			    inter.p0 = *cca0;
+			    inter.p1 = neighbours[npi];
+			    inter.distance = distance;
+			    inter.direction = direction.normalize();
+			    segment_interactions.push_back(inter);
+			}
+		    }
+		    cca0++;
 		}
 		neighbours.clear();
 	    }
@@ -161,14 +169,15 @@ void compute_densities(std::vector<interaction> interactions, float smoothing_ra
     }
 }
 
-// compute pressures from EOS and pressure/density^2 for each particle
+// compute pressures from equation of state and pressure/density^2
 void compute_pressures(fluid f)
 {
     for(particle* pp=f.particles; pp<f.particles+f.particle_count; pp++) {
 	// pp->density += (f.max_samples - pp->samples) * f.avg_density_fraction;
 	pp->density *= f.particle_mass * f.density_factor;
-	if (pp->samples < (0.95 * f.max_samples)) pp->density = f.density;
-	pp->pressure = ideal(pp->density, f);
+	// correction of undersampled density
+	if (pp->samples < 0.9 * f.max_samples) pp->density = f.density;
+	pp->pressure = eos(pp->density, f);
 	pp->p_d2 = pp->pressure / pow(pp->density, 2);
     }
 }
@@ -180,7 +189,8 @@ void apply_forces(std::vector<interaction> interactions, fluid f)
     for (long ii=0; ii<interactions.size(); ii++) {
 	interaction i = interactions[ii];
 	float pf_fraction =
-	    (i.p0->p_d2 + i.p1->p_d2)
+	    - f.particle_mass
+	    * (i.p0->p_d2 + i.p1->p_d2)
 	    * press_kg(i.distance, f.smoothing_radius);
 	float vf_fraction =
 	    f.dynamic_viscosity
@@ -194,7 +204,7 @@ void apply_forces(std::vector<interaction> interactions, fluid f)
 	i.p1->vforce -= dir;
     }
     for (particle* pp=f.particles; pp<f.particles + f.particle_count; pp++) {
-	pp->rigid_body->applyCentralForce(pp->pforce + pp->vforce);
+	pp->rigid_body->applyCentralImpulse((pp->pforce + pp->vforce) * f.dt);
 	// printf("Samples = %lu, density = %f\n", pp->samples, pp->density/f.density);
     }
 }
@@ -214,10 +224,12 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     float height = faabb.max.getY() - taabb.min.getY();
     float v_max = sqrt(2 * G * height);
     float cs = v_max / sqrt(MAX_DENSITY_FLUCTUATION);
-    f->ideal_k = 2000;
+    f->ideal_k = 20;
+    f->tait_b = 200;
 
     // dt to match MAX_DENSITY_FLUCTUATION between ticks
-    f->dt = MAX_DENSITY_FLUCTUATION * f->particle_radius / v_max;
+    f->dt = 3 * f->particle_radius / cs;
+    // f->dt = 0.000452;
 
     // measure and store max density and samples in the initial fluid
     // configuration in order to ajust later sph computations
@@ -233,7 +245,7 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
 	    max_density = pp->density;
 	}
     }
-    f->max_samples = max_samples;
+    f->max_samples = (float) max_samples;
     f->avg_density_fraction = max_density / max_samples;
     f->density_factor = f->density / (max_density * f->particle_mass);
 
@@ -285,7 +297,7 @@ void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
 
 }
 
-void compute_cf(float* cf, lp_grid lpg)
+void compute_cf(lp_grid lpg)
 {
     long ti = 0;
     long xs_count = 1+lpg.x/lpg.xss;

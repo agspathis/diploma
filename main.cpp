@@ -8,18 +8,22 @@
 #include "sph.h"
 
 // Constants
-#define STEPS 1
+#define FRAMES 200
 #define FRAME_DT 0.05
 #define PARTICLES 10000
 #define TERRAIN_SCALING_FACTOR 1
 
+// Collision groups
+enum collisiontypes { TCOL = 1, PCOL = 2 };
+
 // Global parameters
 const char* output_dir = "/home/agspathis/diplom/frames";
 const char* obj_filename = "/home/agspathis/diplom/models/obj/box-small.obj";
-aabb fluid_aabb = { btVector3(0, 2, 2), btVector3(2, 5, 8) };
+aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(2, 8, 10) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim fsim = *((fluid_sim*) dynamics_world->getWorldUserInfo());
+    collect_terrain_forces(dynamics_world, fsim.t);
     update_lp_grid(fsim.lpg);
     apply_sph(fsim);
 }
@@ -42,10 +46,12 @@ int main (void)
 
     // terrain, fluid, lp_grid and fluid_sim construction
     terrain terrain = make_terrain_obj(obj_filename, TERRAIN_SCALING_FACTOR);
+    // dynamics_world->addRigidBody(terrain.rigid_body, TCOL, PCOL);
     dynamics_world->addRigidBody(terrain.rigid_body);
 
     fluid fluid = make_fluid(fluid_aabb, PARTICLES);
     for (long pi=0; pi<fluid.particle_count; pi++)
+	// dynamics_world->addRigidBody(fluid.particles[pi].rigid_body, PCOL, TCOL);
 	dynamics_world->addRigidBody(fluid.particles[pi].rigid_body);
 
     lp_grid lp_grid = make_lp_grid(terrain.taabb, fluid);
@@ -64,10 +70,13 @@ int main (void)
     terrain_to_obj(output_dir, terrain);
 
     // simulation
-    for (int step=0; step<STEPS; step++) {
+    for (int frame=0; frame<FRAMES; frame++) {
 	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/fluid.dt), fluid.dt);
-	printf("Frame %d / %d\n", step, STEPS-1);
-	particles_to_vtk(output_dir, fluid, step);
+	compute_cf(lp_grid);
+	particles_to_vtk(output_dir, fluid, frame);
+	// compute_cf(lp_grid);
+	// color_field_to_vtk(output_dir, lp_grid, frame);
+	printf("Frame %d / %d\n", frame, FRAMES-1);
     }
 
     // cleanup

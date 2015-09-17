@@ -28,6 +28,7 @@ terrain read_obj(const char* filename)
     }
     t.vertices = (vertex*) malloc(vertex_count * sizeof(vertex));
     t.faces = (face*) malloc(face_count * sizeof(face));
+    t.forces = (float*) malloc(face_count * sizeof(float));
     t.vertex_count = vertex_count;
     t.face_count = face_count;
 
@@ -107,7 +108,9 @@ terrain make_terrain_obj(const char* filename, float scale_factor)
 	(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     btRigidBody::btRigidBodyConstructionInfo t_ci
 	(0, t_motion_state, t.shape, btVector3(0, 0, 0));
-    // t_ci.m_restitution = 0.8;	// fluid adhesion to terrain
+    t_ci.m_restitution = 0.0;
+    t_ci.m_friction = 0.0;
+    t_ci.m_rollingFriction = 0.0;
     t.rigid_body = new btRigidBody(t_ci);
 
     // print terrain aabb
@@ -134,4 +137,9 @@ float aabb_volume(aabb aabb)
 {
     aabb.max -= aabb.min;
     return (aabb.max.getX() * aabb.max.getY() * aabb.max.getZ());
+}
+
+void collect_terrain_forces(btDynamicsWorld* dynamics_world, terrain t)
+{
+    t;
 }
