@@ -13,14 +13,16 @@ typedef Point_3<Kernel> Point;
 
 // Implements standard x-major linear indexing (following vtk's choice of
 // x-major indexing in structured_points dataset format). If any index is out of
-// bounds in any of the 3 dimensions of the grid the linear address
-// (LPG.CELL_COUNT) of the last cell containing the off-grid particles is
-// returned.
-long linearize (lp_grid lpg, long i, long j, long k)
+// bounds in any of the 3 dimensions of the grid the linear address of the last
+// cell (LPG.CELL_COUNT) containing the off-grid particles is returned. F
+// denotes the number of subdivisions inside each cell along each axis (same for
+// x, y, z), for addressing higher resolution subgrids aligned with the master
+// grid.
+long linearize (lp_grid lpg, long i, long j, long k, int f)
 {
-    if (i<0 || i>=lpg.x || j<0 || j>=lpg.y || k<0 || k>=lpg.z)
+    if (i<0 || i>=f*lpg.x || j<0 || j>=f*lpg.y || k<0 || k>=f*lpg.z)
 	return lpg.cell_count;
-    else return (i + j*lpg.x + k*lpg.x*lpg.y);
+    else return (i + j*f*lpg.x + k*f*lpg.x*f*lpg.y);
 }
 
 anchor* particle_anchor(lp_grid lpg, particle* pp)
@@ -29,7 +31,7 @@ anchor* particle_anchor(lp_grid lpg, particle* pp)
     long i = floor(relative_position.getX()/lpg.step);
     long j = floor(relative_position.getY()/lpg.step);
     long k = floor(relative_position.getZ()/lpg.step);
-    return lpg.map[linearize(lpg, i, j, k)];
+    return lpg.map[linearize(lpg, i, j, k, 1)];
 }
 
 // Letters 'i', 't' stand for 'initial' and 'terminal/target' respectively
@@ -100,10 +102,12 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
 
     // Initialize MAP
     for (long ci=0; ci<ps.size(); ci++)
-	lpg.map[linearize(lpg, ps[ci].x(), ps[ci].y(), ps[ci].z())] = lpg.anchors+ci;
+	lpg.map[linearize(lpg, ps[ci].x(), ps[ci].y(), ps[ci].z(), 1)]
+	    = lpg.anchors+ci;
     lpg.map[lpg.cell_count] = lpg.anchors+lpg.cell_count;
     // Initialize ANCHORS to LPG.PARTICLES (start of array)
-    for (anchor* a=lpg.anchors; a<=lpg.anchors+lpg.cell_count; a++) *a = lpg.particles;
+    for (anchor* a=lpg.anchors; a<=lpg.anchors+lpg.cell_count; a++)
+	*a = lpg.particles;
     // Populate PARTICLES
     for (particle* pp=fluid.particles; pp<fluid.particles+lpg.particle_count; pp++)
 	insert_particle(lpg, pp);
@@ -150,7 +154,7 @@ void delete_lp_grid(lp_grid lpg)
 cell get_cell(lp_grid lpg, long i, long j, long k)
 {
     cell c;
-    anchor* a = lpg.map[linearize(lpg, i, j, k)];
+    anchor* a = lpg.map[linearize(lpg, i, j, k, 1)];
     if (a == lpg.map[lpg.cell_count]) {
 	c.start = *a;
 	c.end = &lpg.particles[lpg.particle_count];

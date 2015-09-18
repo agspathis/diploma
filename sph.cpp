@@ -228,8 +228,7 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     f->tait_b = 200;
 
     // dt to match MAX_DENSITY_FLUCTUATION between ticks
-    f->dt = 3 * f->particle_radius / cs;
-    // f->dt = 0.000452;
+    f->dt = f->particle_radius / v_max;
 
     // measure and store max density and samples in the initial fluid
     // configuration in order to ajust later sph computations
@@ -272,17 +271,15 @@ float cell_cf_fraction(lp_grid lpg, long i, long j, long k, btVector3 cpos)
 void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
 {
     float cf;
-    long ixi = xsi*lpg.xss;
-    long iyi = ysi*lpg.yss;
-    long izi = zsi*lpg.zss;
-    long txi = std::min((xsi+1)*lpg.xss, lpg.x);
-    long tyi = std::min((ysi+1)*lpg.yss, lpg.y);
-    long tzi = std::min((zsi+1)*lpg.zss, lpg.z);
+    btVector3 cpos;
+    long ixi = xsi*lpg.xss; long txi = std::min((xsi+1)*lpg.xss, lpg.x);
+    long iyi = ysi*lpg.yss; long tyi = std::min((ysi+1)*lpg.yss, lpg.y);
+    long izi = zsi*lpg.zss; long tzi = std::min((zsi+1)*lpg.zss, lpg.z);
     for (long xi=ixi; xi<txi; xi++)
 	for (long yi=iyi; yi<tyi; yi++)
 	    for (long zi=izi; zi<tzi; zi++) {
 		cf = 0;
-		btVector3 cpos = btVector3(xi*lpg.step, yi*lpg.step, zi*lpg.step);
+		cpos = btVector3(xi*lpg.step, yi*lpg.step, zi*lpg.step);
 		// sum contribution of the 8 cells surrounding CPOS
 		cf += cell_cf_fraction(lpg, xi-1, yi-1, zi-1, cpos);
 		cf += cell_cf_fraction(lpg, xi-1, yi-1, zi  , cpos);
@@ -292,7 +289,7 @@ void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
 		cf += cell_cf_fraction(lpg, xi  , yi-1, zi  , cpos);
 		cf += cell_cf_fraction(lpg, xi  , yi  , zi-1, cpos);
 		cf += cell_cf_fraction(lpg, xi  , yi  , zi  , cpos);
-		lpg.color_field[linearize(lpg, xi, yi, zi)] = cf;
+		lpg.color_field[linearize(lpg, xi, yi, zi, 1)] = cf;
 	    }
 
 }

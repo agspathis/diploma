@@ -68,7 +68,7 @@ struct cell {
     anchor end;
 };
 
-long linearize (lp_grid lpg, long i, long j, long k);
+long linearize(lp_grid lpg, long i, long j, long k, int f);
 
 cell get_cell(lp_grid lpg, long i, long j, long k);
 

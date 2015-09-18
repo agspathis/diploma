@@ -3,6 +3,8 @@
 
 #include "lp_grid.h"
 
+#define CELL_CF_SUBDIVS 3
+
 struct interaction {
     particle* p0;
     particle* p1;

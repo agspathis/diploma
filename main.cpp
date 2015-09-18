@@ -1,4 +1,4 @@
-#include <iostream>
+#include <sys/time.h>
 
 #include "utilities.h"
 #include "output.h"
@@ -8,7 +8,8 @@
 #include "sph.h"
 
 // Constants
-#define FRAMES 200
+#define FRAMES 100
+#define SAMPLES 50
 #define FRAME_DT 0.05
 #define PARTICLES 10000
 #define TERRAIN_SCALING_FACTOR 1
@@ -19,7 +20,7 @@ enum collisiontypes { TCOL = 1, PCOL = 2 };
 // Global parameters
 const char* output_dir = "/home/agspathis/diplom/frames";
 const char* obj_filename = "/home/agspathis/diplom/models/obj/box-small.obj";
-aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(2, 8, 10) };
+aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(1, 8, 10) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim fsim = *((fluid_sim*) dynamics_world->getWorldUserInfo());
@@ -49,7 +50,7 @@ int main (void)
     // dynamics_world->addRigidBody(terrain.rigid_body, TCOL, PCOL);
     dynamics_world->addRigidBody(terrain.rigid_body);
 
-    fluid fluid = make_fluid(fluid_aabb, PARTICLES);
+    fluid fluid = make_fluid(fluid_aabb, PARTICLES, SAMPLES);
     for (long pi=0; pi<fluid.particle_count; pi++)
 	// dynamics_world->addRigidBody(fluid.particles[pi].rigid_body, PCOL, TCOL);
 	dynamics_world->addRigidBody(fluid.particles[pi].rigid_body);
@@ -70,13 +71,19 @@ int main (void)
     terrain_to_obj(output_dir, terrain);
 
     // simulation
+    printf("SIMULATION START\n");
+    struct timeval start, end, diff;
     for (int frame=0; frame<FRAMES; frame++) {
+	gettimeofday(&start, NULL);
 	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/fluid.dt), fluid.dt);
 	compute_cf(lp_grid);
 	particles_to_vtk(output_dir, fluid, frame);
-	// compute_cf(lp_grid);
-	// color_field_to_vtk(output_dir, lp_grid, frame);
-	printf("Frame %d / %d\n", frame, FRAMES-1);
+	compute_cf(lp_grid);
+	color_field_to_vtk(output_dir, lp_grid, frame);
+	gettimeofday(&end, NULL);
+	timersub(&end, &start, &diff);
+	printf("Frame %03d/%03d, %ld.%06ld seconds\n",
+	       frame, FRAMES-1, (int) diff.tv_sec, (long) diff.tv_usec);
     }
 
     // cleanup

@@ -44,7 +44,7 @@ struct fluid {
     particle* particles;
 };
 
-fluid make_fluid(aabb aabb, long desired_particle_count);
+fluid make_fluid(aabb aabb, long desired_particle_count, long desired_sample_count);
 
 int delete_particle(particle* pp);
 

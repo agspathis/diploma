@@ -1,6 +1,6 @@
 #include "fluid.h"
 
-fluid make_fluid(aabb aabb, long desired_particle_count)
+fluid make_fluid(aabb aabb, long desired_particle_count, long desired_sample_count)
 {
     fluid f;
     // AABB volume extraction and loop limit setting
@@ -17,7 +17,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 
     // F.PARTICLE_RADIUS computed based on the fraction of space that equal
     // spheres in closest packing (HPC lattice) occupy = pi/(3*sqrt(2))
-    f.particle_radius = cbrt(volume/(5.6568542*desired_particle_count));
+    f.particle_radius = 0.95 * cbrt(volume / (4 * sqrt(2) * desired_particle_count));
 
     // adjustment for the fluid to be scrictly inside the AABB
     x_min += f.particle_radius;
@@ -42,10 +42,11 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 	for (j=0; (y = (j + (k%2)/3.0) * 1.732 * f.particle_radius) < dy; j++)
 	    for (i=0; (x = (2*i + ((j+k)%2)) * f.particle_radius) < dx; i++)
 		f.particle_count++;
-    f.particle_mass = (volume * f.density)/f.particle_count;
+    f.particle_mass = (volume * f.density) / f.particle_count;
 
-    // F.SMOOTHING_RADIUS for about 50 smoothing samples
-    f.smoothing_radius = 4.2 * f.particle_radius;
+    // F.SMOOTHING_RADIUS
+    f.smoothing_radius =
+	cbrt((3 * sqrt(2) * (desired_sample_count+1)) / M_PI) * f.particle_radius;
     f.particles = (particle*) malloc(f.particle_count * sizeof(particle));
 
     // particle construction
@@ -57,7 +58,9 @@ fluid make_fluid(aabb aabb, long desired_particle_count)
 	for (j=0; (y = (j + (k%2)/3.0) * 1.732 * f.particle_radius) < dy; j++)
 	    for (i=0; (x = (2*i + ((j+k)%2)) * f.particle_radius) < dx; i++, pi++) {
 		btDefaultMotionState* fp_motion_state = new btDefaultMotionState
-		    (btTransform(btQuaternion(0, 0, 0, 1), btVector3(x_min+x, y_min+y, z_min+z)));
+		    (btTransform(btQuaternion(0, 0, 0, 1), btVector3(x_min+x,
+								     y_min+y,
+								     z_min+z)));
 		btRigidBody::btRigidBodyConstructionInfo fp_ci
 		    (f.particle_mass, fp_motion_state, f.fp_shape, fp_inertia);
 		fp_ci.m_restitution = 0.0;
