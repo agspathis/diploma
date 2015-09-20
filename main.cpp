@@ -11,7 +11,7 @@
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 10000
+#define PARTICLES 20000
 #define TERRAIN_SCALING_FACTOR 1
 
 // Collision groups
@@ -75,11 +75,12 @@ int main (void)
     struct timeval start, end, diff;
     for (int frame=0; frame<FRAMES; frame++) {
 	gettimeofday(&start, NULL);
+	// sim step and data export
 	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/fluid.dt), fluid.dt);
 	compute_cf(lp_grid);
 	particles_to_vtk(output_dir, fluid, frame);
-	compute_cf(lp_grid);
 	color_field_to_vtk(output_dir, lp_grid, frame);
+	// log
 	gettimeofday(&end, NULL);
 	timersub(&end, &start, &diff);
 	printf("Frame %03d/%03d, %ld.%06ld seconds\n",

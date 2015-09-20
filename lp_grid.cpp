@@ -14,15 +14,13 @@ typedef Point_3<Kernel> Point;
 // Implements standard x-major linear indexing (following vtk's choice of
 // x-major indexing in structured_points dataset format). If any index is out of
 // bounds in any of the 3 dimensions of the grid the linear address of the last
-// cell (LPG.CELL_COUNT) containing the off-grid particles is returned. F
-// denotes the number of subdivisions inside each cell along each axis (same for
-// x, y, z), for addressing higher resolution subgrids aligned with the master
-// grid.
-long linearize (lp_grid lpg, long i, long j, long k, int f)
+// cell (LPG.CELL_COUNT) containing the off-grid particles is returned. SDF
+// denotes the subdivision factor of the addressed grid.
+long linearize(lp_grid lpg, long i, long j, long k, int sdf)
 {
-    if (i<0 || i>=f*lpg.x || j<0 || j>=f*lpg.y || k<0 || k>=f*lpg.z)
-	return lpg.cell_count;
-    else return (i + j*f*lpg.x + k*f*lpg.x*f*lpg.y);
+    if (i<0 || i>=sdf*lpg.x || j<0 || j>=sdf*lpg.y || k<0 || k>=sdf*lpg.z)
+	return sdf * lpg.cell_count;
+    else return i + j*sdf*lpg.x + k*pow(sdf, 2)*lpg.x*lpg.y;
 }
 
 anchor* particle_anchor(lp_grid lpg, particle* pp)
@@ -58,12 +56,15 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
     lpg->origin = btVector3(domain.min.getX() - lpg->step/2,
 			    domain.min.getY() - lpg->step/2,
 			    domain.min.getZ() - lpg->step/2);
+    lpg->cf_sdf = DEFAULT_CF_SDF;
 
     // Allocate memory for the 3 arrays
-    lpg->map		= (anchor**) malloc((lpg->cell_count+1) * sizeof(anchor*));
-    lpg->anchors	= (anchor*) malloc((lpg->cell_count+1) * sizeof(anchor));
-    lpg->particles	= (anchor) malloc ((lpg->particle_count+1) * sizeof(particle*));
-    lpg->color_field	= (float*) malloc ((lpg->cell_count) * sizeof(float));
+    lpg->map = (anchor**) malloc((lpg->cell_count+1) * sizeof(anchor*));
+    lpg->anchors = (anchor*) malloc((lpg->cell_count+1) * sizeof(anchor));
+    lpg->particles = (anchor) malloc ((lpg->particle_count+1) * sizeof(particle*));
+    lpg->color_field = (float*) malloc ((lpg->cell_count)
+					* pow(lpg->cf_sdf, 3)
+					* sizeof(float));
 
     return 0;
 }

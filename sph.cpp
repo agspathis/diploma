@@ -38,9 +38,10 @@ void clear_particle_data(lp_grid lpg)
     }
 }
 
-void get_neighbour_cells(lp_grid lpg, long xi, long yi, long zi,
+void neighbour_particles(lp_grid lpg, long xi, long yi, long zi,
 			 std::vector<particle*> &neighbours)
 {
+    neighbours.clear();
     // scan only half of surrounding cells to avoid duplication of work
     cell neighbour_cells[13];
     neighbour_cells[ 0] = get_cell(lpg, xi-1, yi-1, zi-1);
@@ -102,7 +103,7 @@ void collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, lo
 		    cca0++;
 		}
 		// collect interactions with particles in neighboring cells
-		get_neighbour_cells(lpg, xi, yi, zi, neighbours);
+		neighbour_particles(lpg, xi, yi, zi, neighbours);
 		cca0 = ccell.start;
 		while (cca0 < ccell.end) {
 		    pos0 = particle_position(*cca0);
@@ -121,7 +122,6 @@ void collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, lo
 		    }
 		    cca0++;
 		}
-		neighbours.clear();
 	    }
     interactions[sii] = segment_interactions;
 }
@@ -255,43 +255,50 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     printf("density_factor = %f\n\n", f->density_factor);
 }
 
-// color field computation
-float cell_cf_fraction(lp_grid lpg, long i, long j, long k, btVector3 cpos)
+// color field value at position CPOS, smoothing radius H
+float sum_cf(std::vector<particle*> neighbours, btVector3 cpos, float h)
 {
-    float cf_fraction = 0;
-    cell c = get_cell(lpg, i, j, k);
-    for (anchor anc=c.start; anc<c.end; anc++) {
-	float distance = (particle_position(*anc) - cpos).length();
-	if (distance < lpg.step)
-	    cf_fraction += dens_k(distance, lpg.step);
+    float cf = 0;
+    for (int pi=0; pi<neighbours.size(); pi++) {
+	float distance = (particle_position(neighbours[pi]) - cpos).length();
+	if (distance < h) cf += dens_k(distance, h);
     }
-    return cf_fraction;
+    return cf;
 }
 
 void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
 {
-    float cf;
-    btVector3 cpos;
+    cell ccell;
+    btVector3 cell_origin, cpos;
+    std::vector<particle*> neighbours;
+    float cf_step = lpg.step / lpg.cf_sdf;
     long ixi = xsi*lpg.xss; long txi = std::min((xsi+1)*lpg.xss, lpg.x);
     long iyi = ysi*lpg.yss; long tyi = std::min((ysi+1)*lpg.yss, lpg.y);
     long izi = zsi*lpg.zss; long tzi = std::min((zsi+1)*lpg.zss, lpg.z);
-    for (long xi=ixi; xi<txi; xi++)
+    for (long zi=izi; zi<tzi; zi++)
 	for (long yi=iyi; yi<tyi; yi++)
-	    for (long zi=izi; zi<tzi; zi++) {
-		cf = 0;
-		cpos = btVector3(xi*lpg.step, yi*lpg.step, zi*lpg.step);
-		// sum contribution of the 8 cells surrounding CPOS
-		cf += cell_cf_fraction(lpg, xi-1, yi-1, zi-1, cpos);
-		cf += cell_cf_fraction(lpg, xi-1, yi-1, zi  , cpos);
-		cf += cell_cf_fraction(lpg, xi-1, yi  , zi-1, cpos);
-		cf += cell_cf_fraction(lpg, xi-1, yi  , zi  , cpos);
-		cf += cell_cf_fraction(lpg, xi  , yi-1, zi-1, cpos);
-		cf += cell_cf_fraction(lpg, xi  , yi-1, zi  , cpos);
-		cf += cell_cf_fraction(lpg, xi  , yi  , zi-1, cpos);
-		cf += cell_cf_fraction(lpg, xi  , yi  , zi  , cpos);
-		lpg.color_field[linearize(lpg, xi, yi, zi, 1)] = cf;
+	    for (long xi=ixi; xi<txi; xi++) {
+		cell_origin = btVector3(xi*lpg.step, yi*lpg.step, zi*lpg.step);
+		neighbour_particles(lpg, xi, yi, zi, neighbours);
+		// add center cell particles to NEIGHBOURS
+		ccell = get_cell(lpg, xi, yi, zi);
+		for (anchor a=ccell.start; a<ccell.end; a++)
+		    neighbours.push_back(*a);
+		// loop over cf sampling points inside ccell
+		for (int z_sd=0; z_sd<lpg.cf_sdf; z_sd++)
+		    for (int y_sd=0; y_sd<lpg.cf_sdf; y_sd++)
+			for (int x_sd=0; x_sd<lpg.cf_sdf; x_sd++) {
+			    cpos = btVector3(x_sd, y_sd, z_sd);
+			    cpos *= cf_step;
+			    cpos += cell_origin;
+			    lpg.color_field[linearize(lpg,
+						      xi*lpg.cf_sdf + x_sd,
+						      yi*lpg.cf_sdf + y_sd,
+						      zi*lpg.cf_sdf + z_sd,
+						      lpg.cf_sdf)]
+				= sum_cf(neighbours, cpos, lpg.step);
+			}
 	    }
-
 }
 
 void compute_cf(lp_grid lpg)

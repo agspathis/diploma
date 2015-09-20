@@ -3,6 +3,8 @@
 
 #include "fluid.h"
 
+#define DEFAULT_CF_SDF 4
+
 typedef particle** anchor;
 
 /*
@@ -35,7 +37,11 @@ typedef particle** anchor;
 		    has PARTICLE_COUNT+1 elements. The extra last slot is used
 		    for loop termination conditions and valid PARTICLE_RANGE for
 		    the last cell (containing out-of-grid particles).
- COLOR_FIELD      : Array containing the samples of the scalar color field
+  CF_SDF          : Color field subdivision factor is the number of subdivisions
+                    inside each cell along each axis (same for x, y, z), for
+		    addressing the higher resolution color field subgrid aligned
+		    with the master grid.
+  COLOR_FIELD     : Array containing the samples of the scalar color field
                     (color = dimensionless density), which are computed at the
 		    minimum vertex of each cell (cube). The isosurface at an
 		    appropriate value is a good estimation of fluid surface.
@@ -49,6 +55,7 @@ struct lp_grid {
     anchor** map;
     anchor* anchors;
     particle** particles;
+    int cf_sdf;
     float* color_field;
 };
 

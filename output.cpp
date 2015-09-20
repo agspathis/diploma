@@ -87,15 +87,17 @@ void color_field_to_vtk(const char* output_dir, lp_grid lpg, long frame)
     fprintf(vtk, "Simulation color field\n");
     fprintf(vtk, "ASCII\n");
     fprintf(vtk, "DATASET STRUCTURED_POINTS\n");
-    fprintf(vtk, "DIMENSIONS %ld %ld %ld\n", lpg.x, lpg.y, lpg.z);
+    fprintf(vtk, "DIMENSIONS %ld %ld %ld\n",
+	    lpg.cf_sdf * lpg.x, lpg.cf_sdf * lpg.y, lpg.cf_sdf * lpg.z);
     fprintf(vtk, "ORIGIN %f %f %f\n",
 	    lpg.origin.getX(), lpg.origin.getY(), lpg.origin.getZ());
-    fprintf(vtk, "SPACING %f %f %f\n\n", lpg.step, lpg.step, lpg.step);
+    fprintf(vtk, "SPACING %f %f %f\n\n",
+	    lpg.step / lpg.cf_sdf, lpg.step / lpg.cf_sdf, lpg.step / lpg.cf_sdf);
     
-    fprintf(vtk, "POINT_DATA %ld\n", lpg.cell_count);
+    fprintf(vtk, "POINT_DATA %ld\n", lpg.cell_count * (long) pow(lpg.cf_sdf, 3));
     fprintf(vtk, "SCALARS color_field FLOAT\n");
     fprintf(vtk, "LOOKUP_TABLE default\n");
-    for (long cfi = 0; cfi < lpg.cell_count; cfi++)
+    for (long cfi = 0; cfi < lpg.cell_count * pow(lpg.cf_sdf, 3); cfi++)
 	fprintf(vtk, "%f\n", lpg.color_field[cfi]);
     fclose(vtk);
 }
