@@ -20,7 +20,7 @@ enum collisiontypes { TCOL = 1, PCOL = 2 };
 // Global parameters
 const char* output_dir = "/home/agspathis/diplom/frames";
 const char* obj_filename = "/home/agspathis/diplom/models/obj/box-small.obj";
-aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(1, 8, 10) };
+aabb fluid_aabb = { btVector3(0, 3, 0), btVector3(1, 8, 10) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim fsim = *((fluid_sim*) dynamics_world->getWorldUserInfo());

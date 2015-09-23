@@ -16,14 +16,9 @@ struct particle {
     float p_d2;
     btVector3 pforce;
     btVector3 vforce;
-    btVector3 neighbour_location;
     btRigidBody* rigid_body;
 };
 
-/*
-  DENSITY_FACTOR is determined from the fluid at rest and scales the density
-  kernel estimation to match the actual density.
- */
 struct fluid {
     /* set in construction */
     float density;
@@ -37,8 +32,8 @@ struct fluid {
     float tait_b;
     float ideal_k;
     float max_samples;
+    /* DENSITY_FACTOR = F.DENSITY / (density kernel estimation) */
     float density_factor;
-    float avg_density_fraction;
     /* fluid data */
     btCollisionShape* fp_shape;
     particle* particles;

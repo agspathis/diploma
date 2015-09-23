@@ -3,7 +3,7 @@
 
 #include "fluid.h"
 
-#define DEFAULT_CF_SDF 4
+#define DEFAULT_CF_SDF 1
 
 typedef particle** anchor;
 

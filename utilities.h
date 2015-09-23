@@ -11,6 +11,6 @@ float rand_fb(float b);
 
 int print_aabb(aabb aabb);
 
-int print_long_array(long* array, long count);
+int print_int_array(long* array, long count);
 
 #endif

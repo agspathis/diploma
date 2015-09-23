@@ -173,7 +173,6 @@ void compute_densities(std::vector<interaction> interactions, float smoothing_ra
 void compute_pressures(fluid f)
 {
     for(particle* pp=f.particles; pp<f.particles+f.particle_count; pp++) {
-	// pp->density += (f.max_samples - pp->samples) * f.avg_density_fraction;
 	pp->density *= f.particle_mass * f.density_factor;
 	// correction of undersampled density
 	if (pp->samples < 0.9 * f.max_samples) pp->density = f.density;
@@ -224,7 +223,7 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     float height = faabb.max.getY() - taabb.min.getY();
     float v_max = sqrt(2 * G * height);
     float cs = v_max / sqrt(MAX_DENSITY_FLUCTUATION);
-    f->ideal_k = 20;
+    f->ideal_k = 200;
     f->tait_b = 200;
 
     // dt to match MAX_DENSITY_FLUCTUATION between ticks
@@ -245,7 +244,6 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
 	}
     }
     f->max_samples = (float) max_samples;
-    f->avg_density_fraction = max_density / max_samples;
     f->density_factor = f->density / (max_density * f->particle_mass);
 
     printf("FLUID ADJUSTMENT INFO:\n");

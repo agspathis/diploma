@@ -59,6 +59,13 @@ void particles_to_vtk(const char* output_dir, fluid f, long frame)
     }
     fprintf(vtk, "\n");
 
+    fprintf(vtk, "SCALARS samples INTEGER\n");
+    fprintf(vtk, "LOOKUP_TABLE default\n");
+    for (particle* pp=f.particles; pp<f.particles+size; pp++) {
+	fprintf(vtk, "%d\n", pp->samples);
+    }
+    fprintf(vtk, "\n");
+
     fclose(vtk);
 }
 

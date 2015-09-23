@@ -14,7 +14,7 @@ int print_aabb(aabb aabb)
     return 0;
 }
 
-int print_long_array(long* array, long count)
+int print_int_array(long* array, long count)
 {
     for (long index=0; index<count; index++) {
 	printf("%d ", array[index]);
