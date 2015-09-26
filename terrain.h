@@ -1,6 +1,7 @@
 #ifndef TERRAIN_H
 #define TERRAIN_H
 
+#include <vector>
 #include <btBulletDynamicsCommon.h>
 
 // typedef btVector3 vertex;
@@ -34,12 +35,18 @@ struct terrain {
     btRigidBody* rigid_body;
 };
 
+struct terrain_impulse {
+    btVector3 position;
+    float impulse;
+};
+
 float aabb_volume(aabb aabb);
 
 terrain make_terrain_obj(const char* filename, float scale_factor);
 
 void delete_terrain(terrain t);
 
-void collect_terrain_forces(btDynamicsWorld* dynamics_world, terrain t);
+void collect_terrain_impulses(btDynamicsWorld* dynamics_world,
+			      std::vector<terrain_impulse>& terrain_impulses);
 
 #endif

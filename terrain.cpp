@@ -139,7 +139,34 @@ float aabb_volume(aabb aabb)
     return (aabb.max.getX() * aabb.max.getY() * aabb.max.getZ());
 }
 
-void collect_terrain_forces(btDynamicsWorld* dynamics_world, terrain t)
+void collect_terrain_impulses(btDynamicsWorld* dynamics_world,
+			      std::vector<terrain_impulse>& terrain_impulses)
 {
-    t;
+    long manifold_count = dynamics_world->getDispatcher()->getNumManifolds();
+    for (long mi=0; mi<manifold_count; mi++) {
+        btPersistentManifold* cm = dynamics_world->getDispatcher()->getManifoldByIndexInternal(mi);
+        const btCollisionObject* co0 = static_cast<const btCollisionObject*>(cm->getBody0());
+        const btCollisionObject* co1 = static_cast<const btCollisionObject*>(cm->getBody1());
+
+	// filter fluid/terrain collisions
+	if ((co0->getCollisionShape()->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE and
+	     co1->getCollisionShape()->getShapeType() == SPHERE_SHAPE_PROXYTYPE)
+	    or
+	    (co0->getCollisionShape()->getShapeType() == SPHERE_SHAPE_PROXYTYPE and
+	     co1->getCollisionShape()->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE)) {
+
+	    for (int cci=0; cci<cm->getNumContacts(); cci++)
+	    {
+		btManifoldPoint& cpt = cm->getContactPoint(cci);
+		const btVector3& normal = cpt.m_normalWorldOnB;
+		float impulse = cpt.getAppliedImpulse();
+		if (cpt.getAppliedImpulse() != 0) {
+		    terrain_impulse ti;
+		    ti.position = cpt.getPositionWorldOnB();
+		    ti.impulse = impulse;
+		    terrain_impulses.push_back(ti);
+		}
+	    }
+	}
+    }
 }

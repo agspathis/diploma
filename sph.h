@@ -14,9 +14,10 @@ struct fluid_sim {
     terrain t;
     fluid f;
     lp_grid lpg;
+    std::vector<terrain_impulse> tis;
 };
 
-void apply_sph(fluid_sim fsim);
+void apply_sph(fluid_sim* fsimp);
 
 void adjust_fluid(fluid* fluid, lp_grid lpg, aabb fluid_aabb, aabb terrain_aabb);
 

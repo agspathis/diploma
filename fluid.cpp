@@ -32,7 +32,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count, long desired_sample_cou
 
     // values for water
     f.density = WATER_DENSITY;
-    f.dynamic_viscosity = WATER_DV;
+    f.dynamic_viscosity = WATER_DYNAMIC_VISCOSITY;
 
     // particle counting
     float x, y, z;

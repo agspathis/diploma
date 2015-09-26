@@ -10,7 +10,7 @@ void particles_to_vtk(const char* output_dir, fluid f, long frame)
 
     // standard header
     fprintf(vtk,"# vtk DataFile Version 3.1\n");
-    fprintf(vtk,"Simulation particles\n");
+    fprintf(vtk,"Fluid particles\n");
     fprintf(vtk,"ASCII\n");
     fprintf(vtk,"DATASET UNSTRUCTURED_GRID\n");
 
@@ -54,16 +54,14 @@ void particles_to_vtk(const char* output_dir, fluid f, long frame)
 
     fprintf(vtk, "SCALARS density DOUBLE\n");
     fprintf(vtk, "LOOKUP_TABLE default\n");
-    for (particle* pp=f.particles; pp<f.particles+size; pp++) {
+    for (particle* pp=f.particles; pp<f.particles+size; pp++)
 	fprintf(vtk, "%f\n", pp->density/f.density);
-    }
     fprintf(vtk, "\n");
 
     fprintf(vtk, "SCALARS samples INTEGER\n");
     fprintf(vtk, "LOOKUP_TABLE default\n");
-    for (particle* pp=f.particles; pp<f.particles+size; pp++) {
+    for (particle* pp=f.particles; pp<f.particles+size; pp++)
 	fprintf(vtk, "%d\n", pp->samples);
-    }
     fprintf(vtk, "\n");
 
     fclose(vtk);
@@ -106,5 +104,45 @@ void color_field_to_vtk(const char* output_dir, lp_grid lpg, long frame)
     fprintf(vtk, "LOOKUP_TABLE default\n");
     for (long cfi = 0; cfi < lpg.cell_count * pow(lpg.cf_sdf, 3); cfi++)
 	fprintf(vtk, "%f\n", lpg.color_field[cfi]);
+    fclose(vtk);
+}
+
+void terrain_impulses_to_vtk(const char* output_dir, std::vector<terrain_impulse> tis, long frame)
+{
+    chdir(output_dir);
+    char filename[sizeof "impulses_000000.vtk"];
+    sprintf(filename, "impulses_%06d.vtk", frame);
+    FILE* vtk = fopen(filename, "w");
+    long size = tis.size();
+
+    // standard header
+    fprintf(vtk,"# vtk DataFile Version 3.1\n");
+    fprintf(vtk,"Terrain impulses\n");
+    fprintf(vtk,"ASCII\n");
+    fprintf(vtk,"DATASET UNSTRUCTURED_GRID\n");
+
+    // point location
+    fprintf(vtk, "POINTS %lu FLOAT\n", size);
+    for (long tii=0; tii<size; tii++) {
+	btVector3 position = tis[tii].position;
+	fprintf(vtk, "%f %f %f\n", position.getX(), position.getY(), position.getZ());
+    }
+    fprintf(vtk, "\n");
+
+    // dummy cell data
+    fprintf(vtk, "CELLS 1 %lu\n", size+1);
+    fprintf(vtk, "%lu", size);
+    for (long i=0; i<size; i++) fprintf(vtk, " %lu", i);
+    fprintf(vtk, "\n\n");
+
+    fprintf(vtk, "CELL_TYPES 1\n2\n\n");
+
+    fprintf(vtk, "POINT_DATA %lu\n", size);
+    fprintf(vtk, "SCALARS impulse DOUBLE\n");
+    fprintf(vtk, "LOOKUP_TABLE default\n");
+    for (long tii=0; tii<size; tii++)
+	fprintf(vtk, "%f\n", tis[tii].impulse);
+    fprintf(vtk, "\n");
+    
     fclose(vtk);
 }

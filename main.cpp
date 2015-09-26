@@ -11,7 +11,7 @@
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 20000
+#define PARTICLES 10000
 #define TERRAIN_SCALING_FACTOR 1
 
 // Collision groups
@@ -20,13 +20,13 @@ enum collisiontypes { TCOL = 1, PCOL = 2 };
 // Global parameters
 const char* output_dir = "/home/agspathis/diplom/frames";
 const char* obj_filename = "/home/agspathis/diplom/models/obj/box-small.obj";
-aabb fluid_aabb = { btVector3(0, 3, 0), btVector3(1, 8, 10) };
+aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(1, 8, 10) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
-    fluid_sim fsim = *((fluid_sim*) dynamics_world->getWorldUserInfo());
-    collect_terrain_forces(dynamics_world, fsim.t);
-    update_lp_grid(fsim.lpg);
-    apply_sph(fsim);
+    fluid_sim* fsimp = (fluid_sim*) dynamics_world->getWorldUserInfo();
+    collect_terrain_impulses(dynamics_world, fsimp->tis);
+    update_lp_grid(fsimp->lpg);
+    apply_sph(fsimp);
 }
 
 int main (void)
@@ -49,6 +49,7 @@ int main (void)
     terrain terrain = make_terrain_obj(obj_filename, TERRAIN_SCALING_FACTOR);
     // dynamics_world->addRigidBody(terrain.rigid_body, TCOL, PCOL);
     dynamics_world->addRigidBody(terrain.rigid_body);
+    std::vector<terrain_impulse> terrain_impulses;
 
     fluid fluid = make_fluid(fluid_aabb, PARTICLES, SAMPLES);
     for (long pi=0; pi<fluid.particle_count; pi++)
@@ -61,6 +62,7 @@ int main (void)
     fluid_sim fluid_sim;
     fluid_sim.f = fluid;
     fluid_sim.lpg = lp_grid;
+    fluid_sim.tis = terrain_impulses;
     dynamics_world->setInternalTickCallback(tick_callback, (void*) &fluid_sim);
 
     // change to and clear output directory
@@ -75,12 +77,18 @@ int main (void)
     struct timeval start, end, diff;
     for (int frame=0; frame<FRAMES; frame++) {
 	gettimeofday(&start, NULL);
+
 	// sim step and data export
 	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/fluid.dt), fluid.dt);
 	compute_cf(lp_grid);
 	particles_to_vtk(output_dir, fluid, frame);
 	color_field_to_vtk(output_dir, lp_grid, frame);
-	// log
+	terrain_impulses_to_vtk(output_dir, fluid_sim.tis, frame);
+
+	// clear impulse data accumulated over last step
+	fluid_sim.tis.clear();
+
+	// frame log
 	gettimeofday(&end, NULL);
 	timersub(&end, &start, &diff);
 	printf("Frame %03d/%03d, %ld.%06ld seconds\n",

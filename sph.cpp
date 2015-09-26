@@ -208,13 +208,13 @@ void apply_forces(std::vector<interaction> interactions, fluid f)
     }
 }
 
-void apply_sph(fluid_sim fsim)
+void apply_sph(fluid_sim* fsimp)
 {
-    clear_particle_data(fsim.lpg);
-    std::vector<interaction> interactions = collect_interactions(fsim.lpg);
-    compute_densities(interactions, fsim.lpg.step);
-    compute_pressures(fsim.f);
-    apply_forces(interactions, fsim.f);
+    clear_particle_data(fsimp->lpg);
+    std::vector<interaction> interactions = collect_interactions(fsimp->lpg);
+    compute_densities(interactions, fsimp->lpg.step);
+    compute_pressures(fsimp->f);
+    apply_forces(interactions, fsimp->f);
 }
 
 // adjust fluid to terrain, compute sph parameters
@@ -223,8 +223,8 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     float height = faabb.max.getY() - taabb.min.getY();
     float v_max = sqrt(2 * G * height);
     float cs = v_max / sqrt(MAX_DENSITY_FLUCTUATION);
-    f->ideal_k = 200;
-    f->tait_b = 200;
+    f->ideal_k = WATER_IDEAL_K;
+    f->tait_b = WATER_TAIT_B;
 
     // dt to match MAX_DENSITY_FLUCTUATION between ticks
     f->dt = f->particle_radius / v_max;

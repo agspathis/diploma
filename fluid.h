@@ -5,7 +5,9 @@
 
 #define G 9.81
 #define WATER_DENSITY 1000
-#define WATER_DV 0.001
+#define WATER_DYNAMIC_VISCOSITY 0.001
+#define WATER_IDEAL_K 200
+#define WATER_TAIT_B 100
 #define MAX_DENSITY_FLUCTUATION 0.01
 
 struct particle {
