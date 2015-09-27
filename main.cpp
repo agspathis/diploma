@@ -11,16 +11,16 @@
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 10000
-#define TERRAIN_SCALING_FACTOR 1
+#define PARTICLES 4000
+#define TERRAIN_SCALING_FACTOR 0.04
 
 // Collision groups
 enum collisiontypes { TCOL = 1, PCOL = 2 };
 
 // Global parameters
 const char* output_dir = "/home/agspathis/diplom/frames";
-const char* obj_filename = "/home/agspathis/diplom/models/obj/box-small.obj";
-aabb fluid_aabb = { btVector3(0, 0, 0), btVector3(1, 8, 10) };
+const char* terrain_filename = "/home/agspathis/diplom/models/obj/the-city.obj";
+aabb fluid_aabb = { btVector3(0, 2, 0), btVector3(6, 5, 84) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim* fsimp = (fluid_sim*) dynamics_world->getWorldUserInfo();
@@ -46,7 +46,7 @@ int main (void)
     dynamics_world->setGravity(btVector3(0, -G, 0));
 
     // terrain, fluid, lp_grid and fluid_sim construction
-    terrain terrain = make_terrain_obj(obj_filename, TERRAIN_SCALING_FACTOR);
+    terrain terrain = make_terrain_obj(terrain_filename, TERRAIN_SCALING_FACTOR);
     // dynamics_world->addRigidBody(terrain.rigid_body, TCOL, PCOL);
     dynamics_world->addRigidBody(terrain.rigid_body);
     std::vector<terrain_impulse> terrain_impulses;

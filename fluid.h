@@ -9,6 +9,7 @@
 #define WATER_IDEAL_K 200
 #define WATER_TAIT_B 100
 #define MAX_DENSITY_FLUCTUATION 0.01
+#define FLUID_INIT_VEL btVector3(10, 0, 0)
 
 struct particle {
     long id;

@@ -68,7 +68,7 @@ fluid make_fluid(aabb aabb, long desired_particle_count, long desired_sample_cou
 		fp_ci.m_rollingFriction = 0.0;
 		f.particles[pi].id = pi;
 		f.particles[pi].rigid_body = new btRigidBody(fp_ci);
-		f.particles[pi].rigid_body->setLinearVelocity(btVector3(0, 0, 0));
+		f.particles[pi].rigid_body->setLinearVelocity(FLUID_INIT_VEL);
 		f.particles[pi].rigid_body->setAngularFactor(btVector3(0, 0, 0));
 	    }
 

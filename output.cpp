@@ -15,7 +15,7 @@ void particles_to_vtk(const char* output_dir, fluid f, long frame)
     fprintf(vtk,"DATASET UNSTRUCTURED_GRID\n");
 
     // point location
-    fprintf(vtk, "POINTS %lu FLOAT\n", size);
+    fprintf(vtk, "POINTS %ld FLOAT\n", size);
     for (particle* pp=f.particles; pp<f.particles+size; pp++) {
 	btVector3 position = particle_position(pp);
 	fprintf(vtk, "%f %f %f\n", position.getX(), position.getY(), position.getZ());
@@ -23,15 +23,15 @@ void particles_to_vtk(const char* output_dir, fluid f, long frame)
     fprintf(vtk, "\n");
 
     // dummy cell data
-    fprintf(vtk, "CELLS 1 %lu\n", size+1);
-    fprintf(vtk, "%lu", size);
-    for (long i=0; i<size; i++) fprintf(vtk, " %lu", i);
+    fprintf(vtk, "CELLS 1 %ld\n", size+1);
+    fprintf(vtk, "%ld", size);
+    for (long i=0; i<size; i++) fprintf(vtk, " %ld", i);
     fprintf(vtk, "\n\n");
 
     fprintf(vtk, "CELL_TYPES 1\n2\n\n");
 
     // point data
-    fprintf(vtk, "POINT_DATA %lu\n", size);
+    fprintf(vtk, "POINT_DATA %ld\n", size);
     fprintf(vtk, "VECTORS pressure DOUBLE\n");
     for (particle* pp=f.particles; pp<f.particles+size; pp++) {
 	btVector3 pforce = pp->pforce;
@@ -110,8 +110,8 @@ void color_field_to_vtk(const char* output_dir, lp_grid lpg, long frame)
 void terrain_impulses_to_vtk(const char* output_dir, std::vector<terrain_impulse> tis, long frame)
 {
     chdir(output_dir);
-    char filename[sizeof "impulses_000000.vtk"];
-    sprintf(filename, "impulses_%06d.vtk", frame);
+    char filename[sizeof "terrain_impulses_000000.vtk"];
+    sprintf(filename, "terrain_impulses_%06d.vtk", frame);
     FILE* vtk = fopen(filename, "w");
     long size = tis.size();
 
@@ -122,7 +122,11 @@ void terrain_impulses_to_vtk(const char* output_dir, std::vector<terrain_impulse
     fprintf(vtk,"DATASET UNSTRUCTURED_GRID\n");
 
     // point location
-    fprintf(vtk, "POINTS %lu FLOAT\n", size);
+    fprintf(vtk, "POINTS %ld FLOAT\n", size);
+
+    // check for empty terrain impulse vector
+    if (size == 0) return;
+
     for (long tii=0; tii<size; tii++) {
 	btVector3 position = tis[tii].position;
 	fprintf(vtk, "%f %f %f\n", position.getX(), position.getY(), position.getZ());
@@ -130,14 +134,14 @@ void terrain_impulses_to_vtk(const char* output_dir, std::vector<terrain_impulse
     fprintf(vtk, "\n");
 
     // dummy cell data
-    fprintf(vtk, "CELLS 1 %lu\n", size+1);
-    fprintf(vtk, "%lu", size);
-    for (long i=0; i<size; i++) fprintf(vtk, " %lu", i);
+    fprintf(vtk, "CELLS 1 %ld\n", size+1);
+    fprintf(vtk, "%ld", size);
+    for (long i=0; i<size; i++) fprintf(vtk, " %ld", i);
     fprintf(vtk, "\n\n");
 
     fprintf(vtk, "CELL_TYPES 1\n2\n\n");
 
-    fprintf(vtk, "POINT_DATA %lu\n", size);
+    fprintf(vtk, "POINT_DATA %ld\n", size);
     fprintf(vtk, "SCALARS impulse DOUBLE\n");
     fprintf(vtk, "LOOKUP_TABLE default\n");
     for (long tii=0; tii<size; tii++)
