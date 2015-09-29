@@ -11,7 +11,7 @@
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 4000
+#define PARTICLES 100000
 #define TERRAIN_SCALING_FACTOR 0.04
 
 // Collision groups
@@ -19,8 +19,9 @@ enum collisiontypes { TCOL = 1, PCOL = 2 };
 
 // Global parameters
 const char* output_dir = "/home/agspathis/diplom/frames";
-const char* terrain_filename = "/home/agspathis/diplom/models/obj/the-city.obj";
-aabb fluid_aabb = { btVector3(0, 2, 0), btVector3(6, 5, 84) };
+const char* coast_filename = "/home/agspathis/diplom/models/obj/the-city.obj";
+const char* boundary_filename = "/home/agspathis/diplom/models/obj/box-custom.obj";
+aabb sea_aabb = { btVector3(0, 2, 0), btVector3(6, 6, 84) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim* fsimp = (fluid_sim*) dynamics_world->getWorldUserInfo();
@@ -46,31 +47,31 @@ int main (void)
     dynamics_world->setGravity(btVector3(0, -G, 0));
 
     // terrain, fluid, lp_grid and fluid_sim construction
-    terrain terrain = make_terrain_obj(terrain_filename, TERRAIN_SCALING_FACTOR);
-    // dynamics_world->addRigidBody(terrain.rigid_body, TCOL, PCOL);
-    dynamics_world->addRigidBody(terrain.rigid_body);
+    terrain coast = make_terrain_obj(coast_filename, TERRAIN_SCALING_FACTOR);
+    terrain boundary = make_terrain_obj(boundary_filename, 1);
+    dynamics_world->addRigidBody(coast.rigid_body);
+    dynamics_world->addRigidBody(boundary.rigid_body);
     std::vector<terrain_impulse> terrain_impulses;
 
-    fluid fluid = make_fluid(fluid_aabb, PARTICLES, SAMPLES);
-    for (long pi=0; pi<fluid.particle_count; pi++)
-	// dynamics_world->addRigidBody(fluid.particles[pi].rigid_body, PCOL, TCOL);
-	dynamics_world->addRigidBody(fluid.particles[pi].rigid_body);
+    fluid sea = make_fluid(sea_aabb, PARTICLES, SAMPLES);
+    for (long pi=0; pi<sea.particle_count; pi++)
+	dynamics_world->addRigidBody(sea.particles[pi].rigid_body);
 
-    lp_grid lp_grid = make_lp_grid(terrain.taabb, fluid);
+    lp_grid lpg = make_lp_grid(coast.taabb, sea);
 
-    adjust_fluid(&fluid, lp_grid, fluid_aabb, terrain.taabb);
-    fluid_sim fluid_sim;
-    fluid_sim.f = fluid;
-    fluid_sim.lpg = lp_grid;
-    fluid_sim.tis = terrain_impulses;
-    dynamics_world->setInternalTickCallback(tick_callback, (void*) &fluid_sim);
+    adjust_fluid(&sea, lpg, sea_aabb, coast.taabb);
+    fluid_sim fsim;
+    fsim.f = sea;
+    fsim.lpg = lpg;
+    fsim.tis = terrain_impulses;
+    dynamics_world->setInternalTickCallback(tick_callback, (void*) &fsim);
 
     // change to and clear output directory
     chdir(output_dir);
     system("exec rm *");
 
     // export docked/scaled terrain
-    terrain_to_obj(output_dir, terrain);
+    terrain_to_obj(output_dir, coast);
 
     // simulation
     printf("SIMULATION START\n");
@@ -79,16 +80,18 @@ int main (void)
 	gettimeofday(&start, NULL);
 
 	// sim step and data export
-	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/fluid.dt), fluid.dt);
-	compute_cf(lp_grid);
-	particles_to_vtk(output_dir, fluid, frame);
-	color_field_to_vtk(output_dir, lp_grid, frame);
-	terrain_impulses_to_vtk(output_dir, fluid_sim.tis, frame);
+	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/sea.dt), sea.dt);
+	compute_cf(lpg);
+	particles_to_vtk(output_dir, sea, frame);
+	color_field_to_vtk(output_dir, lpg, frame);
+	terrain_impulses_to_vtk(output_dir, fsim.tis, frame);
 
-	// clear impulse data accumulated over last step
-	fluid_sim.tis.clear();
-
-	// frame log
+	// clear impulse data accumulated over last step and off-domain particles
+	fsim.tis.clear();
+	cell od_cell = get_cell(lpg, -1, 0, 0);
+	for (anchor a = od_cell.start; a<od_cell.end; a++)
+	    dynamics_world->removeRigidBody((*a)->rigid_body);
+        // frame log
 	gettimeofday(&end, NULL);
 	timersub(&end, &start, &diff);
 	printf("Frame %03d/%03d, %ld.%06ld seconds\n",
@@ -96,14 +99,14 @@ int main (void)
     }
 
     // cleanup
-    dynamics_world->removeRigidBody(terrain.rigid_body);
-    delete_terrain(terrain);
+    dynamics_world->removeRigidBody(coast.rigid_body);
+    delete_terrain(coast);
 
-    for (long pi=0; pi<fluid.particle_count; pi++)
-	dynamics_world->removeRigidBody(fluid.particles[pi].rigid_body);
-    delete_fluid(fluid);
+    for (long pi=0; pi<sea.particle_count; pi++)
+	dynamics_world->removeRigidBody(sea.particles[pi].rigid_body);
+    delete_fluid(sea);
 
-    delete_lp_grid(lp_grid);
+    delete_lp_grid(lpg);
 
     delete dynamics_world;
     delete solver;
