@@ -28,7 +28,6 @@ terrain read_obj(const char* filename)
     }
     t.vertices = (vertex*) malloc(vertex_count * sizeof(vertex));
     t.faces = (face*) malloc(face_count * sizeof(face));
-    t.forces = (float*) malloc(face_count * sizeof(float));
     t.vertex_count = vertex_count;
     t.face_count = face_count;
 
@@ -92,7 +91,7 @@ terrain make_terrain_obj(const char* filename, float scale_factor)
     dock_scale_terrain(&t, scale_factor);
     t.triangle_mesh = new btTriangleMesh();
     for(face* fp=t.faces; fp<t.faces + t.face_count; fp++)
-    	t.triangle_mesh->addTriangle(btVector3(t.vertices[fp->v0i].x,
+	t.triangle_mesh->addTriangle(btVector3(t.vertices[fp->v0i].x,
 					       t.vertices[fp->v0i].y,
 					       t.vertices[fp->v0i].z),
 				     btVector3(t.vertices[fp->v1i].x,
@@ -103,11 +102,11 @@ terrain make_terrain_obj(const char* filename, float scale_factor)
 					       t.vertices[fp->v2i].z));
 
     // construct rigid body for simulation
-    t.shape = new btBvhTriangleMeshShape(t.triangle_mesh, true);
+    btCollisionShape* t_shape = new btBvhTriangleMeshShape(t.triangle_mesh, true);
     btDefaultMotionState* t_motion_state = new btDefaultMotionState
 	(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
     btRigidBody::btRigidBodyConstructionInfo t_ci
-	(0, t_motion_state, t.shape, btVector3(0, 0, 0));
+	(0, t_motion_state, t_shape, btVector3(0, 0, 0));
     t_ci.m_restitution = 0.0;
     t_ci.m_friction = 0.0;
     t_ci.m_rollingFriction = 0.0;
@@ -123,12 +122,74 @@ terrain make_terrain_obj(const char* filename, float scale_factor)
     return t;
 }
 
+// creates the aabb boundary of terrain T as a separate terrain object
+terrain terrain_boundary(terrain t)
+{
+    terrain tb;
+    tb.taabb = t.taabb;
+    float x_max = t.taabb.max.getX();
+    float y_max = t.taabb.max.getY();
+    float z_max = t.taabb.max.getZ();
+    tb.vertex_count = 8;
+    tb.face_count = 12;
+    tb.vertices = (vertex*) malloc(tb.vertex_count * sizeof(vertex));
+    tb.faces = (face*) malloc(tb.face_count * sizeof(face));
+
+    tb.vertices[0].x = 0;     tb.vertices[0].y = 0;     tb.vertices[0].z = z_max;
+    tb.vertices[1].x = 0;     tb.vertices[1].y = 0;     tb.vertices[1].z = 0;
+    tb.vertices[2].x = 0;     tb.vertices[2].y = y_max; tb.vertices[2].z = 0;
+    tb.vertices[3].x = 0;     tb.vertices[3].y = y_max; tb.vertices[3].z = z_max;
+    tb.vertices[4].x = x_max; tb.vertices[4].y = 0;     tb.vertices[4].z = z_max;
+    tb.vertices[5].x = x_max; tb.vertices[5].y = 0;     tb.vertices[5].z = 0;
+    tb.vertices[6].x = x_max; tb.vertices[6].y = y_max; tb.vertices[6].z = 0;
+    tb.vertices[7].x = x_max; tb.vertices[7].y = y_max; tb.vertices[7].z = z_max;
+
+    // hardcoded topology
+    tb.faces[ 0].v0i = 3; tb.faces[ 0].v1i = 2; tb.faces[ 0].v2i = 1;
+    tb.faces[ 1].v0i = 1; tb.faces[ 1].v1i = 0; tb.faces[ 1].v2i = 3;
+    tb.faces[ 2].v0i = 1; tb.faces[ 2].v1i = 5; tb.faces[ 2].v2i = 4;
+    tb.faces[ 3].v0i = 4; tb.faces[ 3].v1i = 0; tb.faces[ 3].v2i = 1;
+    tb.faces[ 4].v0i = 2; tb.faces[ 4].v1i = 6; tb.faces[ 4].v2i = 5;
+    tb.faces[ 5].v0i = 5; tb.faces[ 5].v1i = 1; tb.faces[ 5].v2i = 2;
+    tb.faces[ 6].v0i = 7; tb.faces[ 6].v1i = 6; tb.faces[ 6].v2i = 2;
+    tb.faces[ 7].v0i = 2; tb.faces[ 7].v1i = 3; tb.faces[ 7].v2i = 7;
+    tb.faces[ 8].v0i = 4; tb.faces[ 8].v1i = 7; tb.faces[ 8].v2i = 3;
+    tb.faces[ 9].v0i = 3; tb.faces[ 9].v1i = 0; tb.faces[ 9].v2i = 4;
+    tb.faces[10].v0i = 5; tb.faces[10].v1i = 6; tb.faces[10].v2i = 7;
+    tb.faces[11].v0i = 7; tb.faces[11].v1i = 4; tb.faces[11].v2i = 5;
+
+    tb.triangle_mesh = new btTriangleMesh();
+    for(face* fp=tb.faces; fp<tb.faces + tb.face_count; fp++)
+	tb.triangle_mesh->addTriangle(btVector3(tb.vertices[fp->v0i].x,
+						tb.vertices[fp->v0i].y,
+						tb.vertices[fp->v0i].z),
+				      btVector3(tb.vertices[fp->v1i].x,
+						tb.vertices[fp->v1i].y,
+						tb.vertices[fp->v1i].z),
+				      btVector3(tb.vertices[fp->v2i].x,
+						tb.vertices[fp->v2i].y,
+						tb.vertices[fp->v2i].z));
+
+    // construct rigid body for simulation
+    btCollisionShape* tb_shape = new btBvhTriangleMeshShape(tb.triangle_mesh, true);
+    btDefaultMotionState* tb_motion_state = new btDefaultMotionState
+	(btTransform(btQuaternion(0, 0, 0, 1), btVector3(0, 0, 0)));
+    btRigidBody::btRigidBodyConstructionInfo tb_ci
+	(0, tb_motion_state, tb_shape, btVector3(0, 0, 0));
+    tb_ci.m_restitution = 0.0;
+    tb_ci.m_friction = 0.0;
+    tb_ci.m_rollingFriction = 0.0;
+    tb.rigid_body = new btRigidBody(tb_ci);
+
+    return tb;
+}
+
 void delete_terrain(terrain t)
 {
     free(t.vertices);
     free(t.faces);
-    delete t.shape;
     delete t.triangle_mesh;
+    delete t.rigid_body->getCollisionShape();
     delete t.rigid_body->getMotionState();
     delete t.rigid_body;
 }
@@ -144,9 +205,9 @@ void collect_terrain_impulses(btDynamicsWorld* dynamics_world,
 {
     long manifold_count = dynamics_world->getDispatcher()->getNumManifolds();
     for (long mi=0; mi<manifold_count; mi++) {
-        btPersistentManifold* cm = dynamics_world->getDispatcher()->getManifoldByIndexInternal(mi);
-        const btCollisionObject* co0 = static_cast<const btCollisionObject*>(cm->getBody0());
-        const btCollisionObject* co1 = static_cast<const btCollisionObject*>(cm->getBody1());
+	btPersistentManifold* cm = dynamics_world->getDispatcher()->getManifoldByIndexInternal(mi);
+	const btCollisionObject* co0 = static_cast<const btCollisionObject*>(cm->getBody0());
+	const btCollisionObject* co1 = static_cast<const btCollisionObject*>(cm->getBody1());
 
 	// filter fluid/terrain collisions
 	if ((co0->getCollisionShape()->getShapeType() == TRIANGLE_MESH_SHAPE_PROXYTYPE and

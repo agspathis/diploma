@@ -29,9 +29,7 @@ struct terrain {
     long face_count;
     vertex* vertices;
     face* faces;
-    float* forces;
     btTriangleMesh* triangle_mesh;
-    btCollisionShape* shape;
     btRigidBody* rigid_body;
 };
 
@@ -43,6 +41,8 @@ struct terrain_impulse {
 float aabb_volume(aabb aabb);
 
 terrain make_terrain_obj(const char* filename, float scale_factor);
+
+terrain terrain_boundary(terrain t);
 
 void delete_terrain(terrain t);
 

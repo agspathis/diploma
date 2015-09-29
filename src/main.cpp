@@ -11,16 +11,16 @@
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 100000
+#define PARTICLES 4000
 #define TERRAIN_SCALING_FACTOR 0.04
 
 // Collision groups
 enum collisiontypes { TCOL = 1, PCOL = 2 };
 
 // Global parameters
-const char* output_dir = "/home/agspathis/diplom/frames";
-const char* coast_filename = "/home/agspathis/diplom/models/obj/the-city.obj";
-const char* boundary_filename = "/home/agspathis/diplom/models/obj/box-custom.obj";
+const char* output_dir = "../frames";
+const char* coast_filename = "../models/the-city.obj";
+const char* boundary_filename = "../models/box-custom.obj";
 aabb sea_aabb = { btVector3(0, 2, 0), btVector3(6, 6, 84) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
@@ -48,7 +48,7 @@ int main (void)
 
     // terrain, fluid, lp_grid and fluid_sim construction
     terrain coast = make_terrain_obj(coast_filename, TERRAIN_SCALING_FACTOR);
-    terrain boundary = make_terrain_obj(boundary_filename, 1);
+    terrain boundary = terrain_boundary(coast);
     dynamics_world->addRigidBody(coast.rigid_body);
     dynamics_world->addRigidBody(boundary.rigid_body);
     std::vector<terrain_impulse> terrain_impulses;
@@ -100,7 +100,9 @@ int main (void)
 
     // cleanup
     dynamics_world->removeRigidBody(coast.rigid_body);
+    dynamics_world->removeRigidBody(boundary.rigid_body);
     delete_terrain(coast);
+    delete_terrain(boundary);
 
     for (long pi=0; pi<sea.particle_count; pi++)
 	dynamics_world->removeRigidBody(sea.particles[pi].rigid_body);
