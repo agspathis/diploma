@@ -11,11 +11,11 @@ using CGAL::Point_3;
 typedef Cartesian<long> Kernel;
 typedef Point_3<Kernel> Point;
 
-// Implements standard x-major linear indexing (following vtk's choice of
-// x-major indexing in structured_points dataset format). If any index is out of
-// bounds in any of the 3 dimensions of the grid the linear address of the last
-// cell (LPG.CELL_COUNT) containing the off-grid particles is returned. SDF
-// denotes the subdivision factor of the addressed grid.
+// Function LINEARIZE implements standard x-major linear indexing (following
+// vtk's choice of x-major indexing in structured_points dataset format). If any
+// index is out of bounds in any of the 3 dimensions of the grid the linear
+// address of the last cell (LPG.CELL_COUNT) containing the off-grid particles
+// is returned. SDF denotes the subdivision factor of the addressed grid.
 long linearize(lp_grid lpg, long i, long j, long k, int sdf)
 {
     if (i<0 || i>=sdf*lpg.x || j<0 || j>=sdf*lpg.y || k<0 || k>=sdf*lpg.z)
@@ -30,16 +30,6 @@ anchor* particle_anchor(lp_grid lpg, particle* pp)
     long j = floor(relative_position.getY()/lpg.step);
     long k = floor(relative_position.getZ()/lpg.step);
     return lpg.map[linearize(lpg, i, j, k, 1)];
-}
-
-// Letters 'i', 't' stand for 'initial' and 'terminal/target' respectively
-void insert_particle(lp_grid lpg, particle* pp)
-{
-    anchor* ta = particle_anchor(lpg, pp);
-    anchor tp = *(ta+1);
-    for (anchor p=lpg.particles+lpg.particle_count; p>tp; p--) *p = *(p-1);
-    for (anchor* a=ta+1; a<=lpg.anchors+lpg.cell_count; a++) (*a)++;
-    *tp = pp;
 }
 
 int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
@@ -58,7 +48,7 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
 			    domain.min.getZ() - lpg->step/2);
     lpg->cf_sdf = DEFAULT_CF_SDF;
 
-    // Allocate memory for the 3 arrays
+    // allocate memory for the 3 arrays
     lpg->map = (anchor**) malloc((lpg->cell_count+1) * sizeof(anchor*));
     lpg->anchors = (anchor*) malloc((lpg->cell_count+1) * sizeof(anchor));
     lpg->particles = (anchor) malloc ((lpg->particle_count+1) * sizeof(particle*));
@@ -69,6 +59,8 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
     return 0;
 }
 
+// Henceforth, letters 'i', 't' in variable names stand for 'initial' and
+// 'terminal/target' respectively
 void verify_lp_grid(lp_grid lpg)
 {
     for (anchor* ia=lpg.anchors; ia<lpg.anchors+lpg.cell_count; ia++)
@@ -81,7 +73,7 @@ void verify_lp_grid(lp_grid lpg)
 
 lp_grid make_lp_grid (aabb domain, fluid fluid)
 {
-    // Grid parameter initialization/allocation
+    // grid parameter initialization/allocation
     lp_grid lpg; long i,j,k;
     allocate_lp_grid(&lpg, domain, fluid);
     printf("LP_GRID INFO:\n");
@@ -90,7 +82,7 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
     printf("cell_count=%lu\n", lpg.cell_count);
     printf("\n");
 
-    // Make points in centers of cells and spatially sort them
+    // make points in centers of cells and spatially sort them
     std::vector<Point> ps;
     for (i=0; i<lpg.x; i++) {
 	for (j=0; j<lpg.y; j++) {
@@ -101,18 +93,37 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
     }
     CGAL::hilbert_sort(ps.begin(), ps.end());
 
-    // Initialize MAP
+    // initialize MAP according to spatial sort
     for (long ci=0; ci<ps.size(); ci++)
 	lpg.map[linearize(lpg, ps[ci].x(), ps[ci].y(), ps[ci].z(), 1)]
 	    = lpg.anchors+ci;
     lpg.map[lpg.cell_count] = lpg.anchors+lpg.cell_count;
-    // Initialize ANCHORS to LPG.PARTICLES (start of array)
-    for (anchor* a=lpg.anchors; a<=lpg.anchors+lpg.cell_count; a++)
-	*a = lpg.particles;
-    // Populate PARTICLES
+    // initialize array holding the particle count for each cell.
+    ptrdiff_t* cell_pc = (ptrdiff_t*) malloc(sizeof(ptrdiff_t) * (lpg.cell_count+1));
+    // scan particles and sum up the particle count for each cell in CELL_PC
     for (particle* pp=fluid.particles; pp<fluid.particles+lpg.particle_count; pp++)
-	insert_particle(lpg, pp);
+	cell_pc[particle_anchor(lpg, pp) - lpg.anchors]++;
+    // initialize anchors
+    size_t anchor_offset=0;
+    for (size_t ci = 0; ci<lpg.cell_count+1; ci++) {
+	lpg.anchors[ci] = lpg.particles + anchor_offset;
+	anchor_offset += cell_pc[ci];
+    }
+    // Populate particles by filling pointers to particles in the cells where
+    // anchors point, and incrementing the respective anchor each time. At the
+    // end, each anchor points to the first particle of the next cell (the last
+    // one to unallocated memory)
+    for (particle* pp=fluid.particles; pp<fluid.particles+lpg.particle_count; pp++) {
+	anchor* ta = particle_anchor(lpg, pp);
+	**ta = pp;
+	(*ta)++;
+    }
+    // set each anchor to point where the previous one does
+    for (size_t ai = lpg.cell_count; ai>0; ai--)
+	lpg.anchors[ai] = lpg.anchors[ai-1];
+    lpg.anchors[0] = lpg.particles;
 
+    free(cell_pc);
     verify_lp_grid(lpg);
     return lpg;
 }
