@@ -6,12 +6,12 @@
 // density kernel (poly 6)
 float dens_k(float r, float h)
 {
-    return pow(h*h-r*r, 3);
+    return (315/(64*M_PI*pow(h, 9)))*pow(h*h-r*r, 3);
 }
 // pressure kernel (spiky) gradient
 float press_kg(float r, float h)
 {
-    return (-45/(M_PI*pow(h, 6))) * pow((h-r), 2);
+    return (-45/(M_PI*pow(h, 6))) * pow(h-r, 2);
 }
 // viscosity kernel laplacian
 float visc_kl(float r, float h)
@@ -88,7 +88,7 @@ void collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, lo
 		cca0 = ccell.start;
 		while (cca0 < ccell.end-1) {
 		    pos0 = particle_position(*cca0);
-		    for (cca1 = cca0+1; cca1 < ccell.end-1; cca1++) {
+		    for (cca1 = cca0+1; cca1 < ccell.end; cca1++) {
 			pos1 = particle_position(*cca1);
 			direction = pos1-pos0;
 			distance = direction.length();
@@ -227,7 +227,7 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     f->tait_b = WATER_TAIT_B;
 
     // dt to match MAX_DENSITY_FLUCTUATION between ticks
-    f->dt = f->particle_radius / v_max;
+    f->dt = 0.1 * f->particle_radius / v_max;
 
     // measure and store max density and samples in the initial fluid
     // configuration in order to ajust later sph computations
@@ -259,7 +259,7 @@ float sum_cf(std::vector<particle*> neighbours, btVector3 cpos, float h)
     float cf = 0;
     for (int pi=0; pi<neighbours.size(); pi++) {
 	float distance = (particle_position(neighbours[pi]) - cpos).length();
-	if (distance < h) cf += dens_k(distance, h);
+ 	if (distance < h) cf += dens_k(distance, h);
     }
     return cf;
 }

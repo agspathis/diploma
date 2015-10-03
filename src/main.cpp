@@ -11,7 +11,7 @@
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 4000
+#define PARTICLES 10000
 #define TERRAIN_SCALING_FACTOR 0.04
 
 // Collision groups
@@ -51,11 +51,14 @@ int main (void)
     terrain boundary = terrain_boundary(coast);
     dynamics_world->addRigidBody(coast.rigid_body);
     dynamics_world->addRigidBody(boundary.rigid_body);
+    // dynamics_world->addRigidBody(coast.rigid_body, TCOL, PCOL);
+    // dynamics_world->addRigidBody(boundary.rigid_body, TCOL, PCOL);
     std::vector<terrain_impulse> terrain_impulses;
 
     fluid sea = make_fluid(sea_aabb, PARTICLES, SAMPLES);
     for (long pi=0; pi<sea.particle_count; pi++)
 	dynamics_world->addRigidBody(sea.particles[pi].rigid_body);
+	// dynamics_world->addRigidBody(sea.particles[pi].rigid_body, PCOL, TCOL);
 
     lp_grid lpg = make_lp_grid(coast.taabb, sea);
 
@@ -70,11 +73,12 @@ int main (void)
     chdir(output_dir);
     system("exec rm *");
 
-    // export docked/scaled terrain
+    // export scaled/docked terrain
     terrain_to_obj(output_dir, coast);
 
     // simulation
     printf("SIMULATION START\n");
+    printf("%d physics ticks per frame\n", (int) ceil(FRAME_DT/sea.dt));
     struct timeval start, end, diff;
     for (int frame=0; frame<FRAMES; frame++) {
 	gettimeofday(&start, NULL);
@@ -86,12 +90,10 @@ int main (void)
 	color_field_to_vtk(output_dir, lpg, frame);
 	terrain_impulses_to_vtk(output_dir, fsim.tis, frame);
 
-	// clear impulse data accumulated over last step and off-domain particles
+	// clear impulse data accumulated over last step
 	fsim.tis.clear();
-	cell od_cell = get_cell(lpg, -1, 0, 0);
-	for (anchor a = od_cell.start; a<od_cell.end; a++)
-	    dynamics_world->removeRigidBody((*a)->rigid_body);
-        // frame log
+
+	// frame log
 	gettimeofday(&end, NULL);
 	timersub(&end, &start, &diff);
 	printf("Frame %03d/%03d, %ld.%06ld seconds\n",
