@@ -35,8 +35,8 @@ typedef particle** anchor;
 		    termination conditions).
   PARTICLES       : Array containing pointers to actual simulation particles. It
 		    has PARTICLE_COUNT+1 elements. The extra last slot is used
-		    for loop termination conditions and valid PARTICLE_RANGE for
-		    the last cell (containing out-of-grid particles).
+		    for loop termination conditions and valid END pointer for
+		    the last cell (virtual -- containing out-of-grid particles).
   CF_SDF          : Color field subdivision factor is the number of subdivisions
                     inside each cell along each axis (same for x, y, z), for
 		    addressing the higher resolution color field subgrid aligned

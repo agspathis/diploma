@@ -227,10 +227,10 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     f->tait_b = WATER_TAIT_B;
 
     // dt to match MAX_DENSITY_FLUCTUATION between ticks
-    f->dt = 0.1 * f->particle_radius / v_max;
+    f->dt = COURANT * f->particle_radius / v_max;
 
     // measure and store max density and samples in the initial fluid
-    // configuration in order to ajust later sph computations
+    // configuration in order to adjust later sph computations
     clear_particle_data(lpg);
     std::vector<interaction> interactions = collect_interactions(lpg);
     compute_densities(interactions, lpg.step);
