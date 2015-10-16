@@ -38,11 +38,13 @@ void clear_particle_data(lp_grid lpg)
     }
 }
 
-void neighbour_particles(lp_grid lpg, long xi, long yi, long zi,
-			 std::vector<particle*> &neighbours)
+// Return the particles in half of surrounding cells to avoid duplication of work in
+// interaction scanning. Center cell particles are ommitted too, since interactions
+// between them are scanned separately.
+void half_neighbour_particles(lp_grid lpg, long xi, long yi, long zi,
+			      std::vector<particle*> &neighbours)
 {
     neighbours.clear();
-    // scan only half of surrounding cells to avoid duplication of work
     cell neighbour_cells[13];
     neighbour_cells[ 0] = get_cell(lpg, xi-1, yi-1, zi-1);
     neighbour_cells[ 1] = get_cell(lpg, xi  , yi-1, zi-1);
@@ -103,7 +105,7 @@ void collect_segment_interactions (lp_grid lpg, long xsi, long ysi, long zsi, lo
 		    cca0++;
 		}
 		// collect interactions with particles in neighboring cells
-		neighbour_particles(lpg, xi, yi, zi, neighbours);
+		half_neighbour_particles(lpg, xi, yi, zi, neighbours);
 		cca0 = ccell.start;
 		while (cca0 < ccell.end) {
 		    pos0 = particle_position(*cca0);
@@ -253,7 +255,7 @@ void adjust_fluid(fluid* f, lp_grid lpg, aabb faabb, aabb taabb)
     printf("density_factor = %f\n\n", f->density_factor);
 }
 
-// color field value at position CPOS, smoothing radius H
+// Color field value at position CPOS, smoothing radius H
 float sum_cf(std::vector<particle*> neighbours, btVector3 cpos, float h)
 {
     float cf = 0;
@@ -262,6 +264,46 @@ float sum_cf(std::vector<particle*> neighbours, btVector3 cpos, float h)
  	if (distance < h) cf += dens_k(distance, h);
     }
     return cf;
+}
+
+// Return every particle in the neighbourhood of center cell, including its particles, for
+// color field estimation around it.
+void all_neighbour_particles(lp_grid lpg, long xi, long yi, long zi,
+			     std::vector<particle*> &neighbours)
+{
+    neighbours.clear();
+    cell neighbour_cells[27];
+    neighbour_cells[ 0] = get_cell(lpg, xi-1, yi-1, zi-1);
+    neighbour_cells[ 1] = get_cell(lpg, xi  , yi-1, zi-1);
+    neighbour_cells[ 2] = get_cell(lpg, xi+1, yi-1, zi-1);
+    neighbour_cells[ 3] = get_cell(lpg, xi-1, yi  , zi-1);
+    neighbour_cells[ 4] = get_cell(lpg, xi  , yi  , zi-1);
+    neighbour_cells[ 5] = get_cell(lpg, xi+1, yi  , zi-1);
+    neighbour_cells[ 6] = get_cell(lpg, xi-1, yi+1, zi-1);
+    neighbour_cells[ 7] = get_cell(lpg, xi  , yi+1, zi-1);
+    neighbour_cells[ 8] = get_cell(lpg, xi+1, yi+1, zi-1);
+    neighbour_cells[ 9] = get_cell(lpg, xi-1, yi-1, zi  );
+    neighbour_cells[10] = get_cell(lpg, xi  , yi-1, zi  );
+    neighbour_cells[11] = get_cell(lpg, xi+1, yi-1, zi  );
+    neighbour_cells[12] = get_cell(lpg, xi-1, yi  , zi  );
+    neighbour_cells[13] = get_cell(lpg, xi  , yi  , zi  );
+    neighbour_cells[14] = get_cell(lpg, xi+1, yi  , zi  );
+    neighbour_cells[15] = get_cell(lpg, xi-1, yi+1, zi  );
+    neighbour_cells[16] = get_cell(lpg, xi  , yi+1, zi  );
+    neighbour_cells[17] = get_cell(lpg, xi+1, yi+1, zi  );
+    neighbour_cells[18] = get_cell(lpg, xi-1, yi-1, zi+1);
+    neighbour_cells[19] = get_cell(lpg, xi  , yi-1, zi+1);
+    neighbour_cells[20] = get_cell(lpg, xi+1, yi-1, zi+1);
+    neighbour_cells[21] = get_cell(lpg, xi-1, yi  , zi+1);
+    neighbour_cells[22] = get_cell(lpg, xi  , yi  , zi+1);
+    neighbour_cells[23] = get_cell(lpg, xi+1, yi  , zi+1);
+    neighbour_cells[24] = get_cell(lpg, xi-1, yi+1, zi+1);
+    neighbour_cells[25] = get_cell(lpg, xi  , yi+1, zi+1);
+    neighbour_cells[26] = get_cell(lpg, xi+1, yi+1, zi+1);
+
+    for(int nci=0; nci<27; nci++)
+	for(anchor a=neighbour_cells[nci].start; a<neighbour_cells[nci].end; a++)
+	    neighbours.push_back(*a);
 }
 
 void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
@@ -277,11 +319,7 @@ void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
 	for (long yi=iyi; yi<tyi; yi++)
 	    for (long xi=ixi; xi<txi; xi++) {
 		cell_origin = btVector3(xi*lpg.step, yi*lpg.step, zi*lpg.step);
-		neighbour_particles(lpg, xi, yi, zi, neighbours);
-		// add center cell particles to NEIGHBOURS
-		ccell = get_cell(lpg, xi, yi, zi);
-		for (anchor a=ccell.start; a<ccell.end; a++)
-		    neighbours.push_back(*a);
+		all_neighbour_particles(lpg, xi, yi, zi, neighbours);
 		// loop over cf sampling points inside ccell
 		for (int z_sd=0; z_sd<lpg.cf_sdf; z_sd++)
 		    for (int y_sd=0; y_sd<lpg.cf_sdf; y_sd++)
