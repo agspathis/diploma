@@ -11,7 +11,7 @@
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 10000
+#define PARTICLES 50000
 #define TERRAIN_SCALING_FACTOR 0.04
 
 // Collision groups
