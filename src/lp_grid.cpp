@@ -99,7 +99,7 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
 	    = lpg.anchors+ci;
     lpg.map[lpg.cell_count] = lpg.anchors+lpg.cell_count;
     // initialize array holding the particle count for each cell.
-    ptrdiff_t* cell_pc = (ptrdiff_t*) malloc(sizeof(ptrdiff_t) * (lpg.cell_count+1));
+    ptrdiff_t cell_pc[lpg.cell_count+1] = {0};
     // scan particles and sum up the particle count for each cell in CELL_PC
     for (particle* pp=fluid.particles; pp<fluid.particles+lpg.particle_count; pp++)
 	cell_pc[particle_anchor(lpg, pp) - lpg.anchors]++;
@@ -123,7 +123,6 @@ lp_grid make_lp_grid (aabb domain, fluid fluid)
 	lpg.anchors[ai] = lpg.anchors[ai-1];
     lpg.anchors[0] = lpg.particles;
 
-    free(cell_pc);
     verify_lp_grid(lpg);
     return lpg;
 }
@@ -139,15 +138,15 @@ void update_lp_grid (lp_grid lpg)
 		tmp_storage = *ip;
 		if (ia < ta) {
 		    tp = *ta-1;
-		    for (anchor p=ip; p<tp; p++) *p = *(p+1);
 		    for (anchor* a=ia+1; a<=ta; a++) (*a)--;
+		    for (anchor p=ip; p<tp; p++) *p = *(p+1);
 		    *tp = tmp_storage;
 		    ip--;	// correction due to shift
 		}
 		else {
 		    tp = *(ta+1);
-		    for (anchor p=ip; p>tp; p--) *p = *(p-1);
 		    for (anchor* a=ia; a>ta; a--) (*a)++;
+		    for (anchor p=ip; p>tp; p--) *p = *(p-1);
 		    *tp = tmp_storage;
 		}
 	    }

@@ -7,20 +7,14 @@
 #include "lp_grid.h"
 #include "sph.h"
 
-// Constants
+// Constants and global parameters
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 50000
+#define PARTICLES 5000
 #define TERRAIN_SCALING_FACTOR 0.04
-
-// Collision groups
-enum collisiontypes { TCOL = 1, PCOL = 2 };
-
-// Global parameters
 const char* output_dir = "../frames";
-const char* coast_filename = "../models/the-city.obj";
-const char* boundary_filename = "../models/box-custom.obj";
+const char* coast_filename = "../models/city_0.obj";
 aabb sea_aabb = { btVector3(0, 2, 0), btVector3(6, 6, 84) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
@@ -51,14 +45,11 @@ int main (void)
     terrain boundary = terrain_boundary(coast);
     dynamics_world->addRigidBody(coast.rigid_body);
     dynamics_world->addRigidBody(boundary.rigid_body);
-    // dynamics_world->addRigidBody(coast.rigid_body, TCOL, PCOL);
-    // dynamics_world->addRigidBody(boundary.rigid_body, TCOL, PCOL);
     std::vector<terrain_impulse> terrain_impulses;
 
     fluid sea = make_fluid(sea_aabb, PARTICLES, SAMPLES);
     for (long pi=0; pi<sea.particle_count; pi++)
 	dynamics_world->addRigidBody(sea.particles[pi].rigid_body);
-	// dynamics_world->addRigidBody(sea.particles[pi].rigid_body, PCOL, TCOL);
 
     lp_grid lpg = make_lp_grid(coast.taabb, sea);
 
