@@ -1,0 +1,76 @@
+\documentclass[12pt,onecolumn,a4paper,twoside]{article}
+\usepackage[T1]{fontenc}
+\usepackage{textcomp}
+\usepackage[utf8x]{inputenc}
+\usepackage[english,greek]{babel}
+\usepackage{amsmath,amsfonts,amssymb}
+% \usepackage{mathtools}
+\usepackage[square, numbers, comma, sort]{natbib}
+% \usepackage{fullpage}
+\usepackage{a4wide}
+\usepackage[version=3]{mhchem}
+\usepackage{kerkis}
+%\usepackage{gfsartemisia-euler}
+%\usepackage{gfsartemisia}
+%\usepackage{gfsdidot}
+\renewcommand*\ttdefault{cmtt}
+\usepackage{eulervm}
+\usepackage{verbatim}
+\usepackage{color}
+\usepackage{gensymb}
+\usepackage[colorlinks=true]{hyperref}
+\usepackage{graphicx}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage{longtable}
+% for frontpage
+\usepackage{adjustbox}
+\usepackage[normalem]{ulem}
+% figures, custom commands
+\usepackage[hang,small,it]{caption}
+\usepackage{subcaption}
+\captionsetup{figurename=Σχήμα}
+\newcommand{\eng}[1]{\selectlanguage{english}#1\selectlanguage{greek}}
+\newcommand{\gre}[1]{\selectlanguage{greek}#1\selectlanguage{english}}
+\newcommand{\ttt}[1]{\selectlanguage{english}\texttt{#1}\selectlanguage{greek}}
+\newcommand{\itcaption}[2][]{\caption[#1]{\textit{#2}}}
+\newcommand{\rmcaption}[2][]{\caption[#1]{#2}}
+\newcommand{\norm}[1]{\lVert#1\rVert}
+\renewcommand{\vec}[1]{\mathbf{#1}} \let\oldhat\hat
+\renewcommand{\hat}[1]{\oldhat{\mathbf{#1}}}
+
+\begin{document}
+\pagenumbering{roman}
+\input{frontpage.tex}
+\cleardoublepage
+\linespread{1.3}
+\input{abstract.tex}
+\clearpage
+\input{acknowledgements.tex}
+\clearpage
+\input{abbrevs.tex}
+\clearpage
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+\input{introduction.tex}
+\clearpage
+\input{implementation.tex}
+\clearpage
+\input{results.tex}
+% \clearpage
+% \input{discussion.tex}
+\clearpage
+\selectlanguage{english} %\footnotesize
+\renewcommand{\refname}{\gre{Βιβλιογραφία}}
+\bibliographystyle{acm}
+\bibliography{bibliography} 
+\selectlanguage{greek} \normalsize
+
+\end{document}
+
+%%% Local Variables: 
+%%% mode: latex
+%%% TeX-master: t
+%%% End: 
