@@ -3,7 +3,7 @@
 
 #include "fluid.h"
 
-#define DEFAULT_CF_SDF 2
+#define DEFAULT_SDF 2
 
 typedef particle** anchor;
 
@@ -37,14 +37,15 @@ typedef particle** anchor;
 		    has PARTICLE_COUNT+1 elements. The extra last slot is used
 		    for loop termination conditions and valid END pointer for
 		    the last cell (virtual -- containing out-of-grid particles).
-  CF_SDF          : Color field subdivision factor is the number of subdivisions
-                    inside each cell along each axis (same for x, y, z), for
-		    addressing the higher resolution color field subgrid aligned
-		    with the master grid.
+  SDF             : Subdivision factor is the number of subdivisions inside each
+                    cell along each axis (same for x, y, z), for addressing the
+                    higher resolution subgrids aligned with the master grid.
   COLOR_FIELD     : Array containing the samples of the scalar color field
                     (color = dimensionless density), which are computed at the
 		    minimum vertex of each cell (cube). The isosurface at an
 		    appropriate value is a good estimation of fluid surface.
+  IMPULSE_FIELD   : Array containing impulse field samples as calculated from
+                    impulses from water onto terrain in each simulation step.
 */
 struct lp_grid {
     btVector3 origin;
@@ -55,8 +56,9 @@ struct lp_grid {
     anchor** map;
     anchor* anchors;
     particle** particles;
-    int cf_sdf;
+    int sdf;
     float* color_field;
+    float* impulse_field;
 };
 
 lp_grid make_lp_grid(aabb domain, fluid fluid);

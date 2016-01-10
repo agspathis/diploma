@@ -15,7 +15,19 @@
 οπτικοποιήσεις για την διατήρηση διαδραστικού αριθμού \eng{FPS} ακόμα και για μεγάλου
 όγκου δεδομένα.
 
-\begin{figure}[h]
+% \begin{figure}[]
+%   \centering
+%   \includegraphics[width=\textwidth]{figures/paraview-interface.png}
+%   \caption[Οπτικοποίηση προσομοίωσης] {Οπτικοποίηση προσομοίωσης τσουνάμι \eng{85k}
+%     σωματιδίων στο \eng{ParaView}, στιγμιότυπο οθόνης. Αριστερά φαίνεται το ιεραρχικό
+%     δένδρο των δεδομένων που οπτικοποιούνται, στη μέση η ανακατασκευή της επιφάνειας του
+%     ρευστού σε συνδυασμό με το μοντέλο της ακτογραμμής, ενώ δεξιά οι ώσεις που ασκεί το
+%     ρευστό στο επιλεγμένο τμήμα του μοντέλου καθώς και γραφική απεικόνιση αυτών σε
+%     ιστόγραμμα.}
+%   \label{fig:paraview-interface}
+% \end{figure}
+
+\begin{sidewaysfigure}
   \centering
   \includegraphics[width=\textwidth]{figures/paraview-interface.png}
   \caption[Οπτικοποίηση προσομοίωσης] {Οπτικοποίηση προσομοίωσης τσουνάμι \eng{85k}
@@ -25,7 +37,7 @@
     ρευστό στο επιλεγμένο τμήμα του μοντέλου καθώς και γραφική απεικόνιση αυτών σε
     ιστόγραμμα.}
   \label{fig:paraview-interface}
-\end{figure}
+\end{sidewaysfigure}
 
 \paragraph{} Στην εικόνα \ref{fig:paraview-interface} φαίνεται σε στιγμιότυπο οθόνης το
 περιβάλλον του \eng{ParaView} κατά την οπτικοποίηση μιας προσομοίωσης \eng{85k}
@@ -93,7 +105,9 @@
 τα σωματίδια κωδικοποιούνται χρωματικά σύμφωνα με το πλήθος γειτονικών σωματιδίων εντός
 της ακτίνας εξομάλυνσης της προσομοίωσης. Όπως φαίνεται, λόγω της φύσης της προσομοίωσης
 (ροή σε ανοιχτό χώρο με πολύπλοκα όρια) το ρευστό διαθέτει υψηλό λόγο επιφάνειας προς
-όγκο, με αποτέλεσμα μεγάλο του μέρος να υποφέρει από υποδειγματοληψία.
+όγκο, με αποτέλεσμα μεγάλο του μέρος να υποφέρει από υποδειγματοληψία. Για το λόγο αυτό
+υιο\-θε\-τή\-θη\-καν (όπως αναλύθηκε και στην παράγραφο \ref{sssec:fluid-init})
+γεωμετρικοί περιορισμοί μεταξύ των σωματιδίων για την αναπλήρωση της χαμένης πληροφορίας.
 
 \begin{figure}[h]
   \begin{subfigure}{.5\textwidth}
@@ -135,8 +149,52 @@
   \label{fig:samples}
 \end{figure}
 
-\subsection{Συνεισφορά -- Επεκτάσεις}
-\paragraph{} Συνεισφορά.
+\begin{figure}[h]
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/impulses-0.png}
+  \end{subfigure}
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/impulses-1.png}
+  \end{subfigure}
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/impulses-2.png}
+  \end{subfigure}
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/impulses-3.png}
+  \end{subfigure}
+  \caption[Ώσεις στην ακτογραμμή]{Διάφορα στιγμιότυπα προσομοίωσης όπου αποτυπώνεται
+    χρωματικά στην ακτογραμμή το μέτρο της ώσης που ασκείται από τα σωματίδια του ρευστού
+    κατά την εξέλιξη του τσουνάμι (θερμότητα χρώματος ανάλογη του μέτρου της ώσης).}
+  \label{fig:impulses}
+\end{figure}
+
+\subsection{Συμπεράσματα -- Μελλοντικές επεκτάσεις}
+\paragraph{} 
+
+\begin{figure}[h]
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/impulse-heatmap-0.png}
+  \end{subfigure}
+  \begin{subfigure}{.5\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/impulse-heatmap-1.png}
+  \end{subfigure}
+  \begin{subfigure}{\textwidth}
+    \centering
+    \includegraphics[width=\textwidth]{figures/impulse-heatmap-2.png}
+  \end{subfigure}
+  \caption[\eng{Heatmap} ώσεων στην ακτογραμμή]{\eng{Heatmap} των ώσεων του ρευστού προς
+    την ακτογραμμή καθ' όλη την εξέλιξη του κύματος, σε τρία διαφορετικά μοντέλα
+    πόλης. Επιβεβαιώνεται οτι το μεγαλύτερο μέρος της ενέργειας του κύματος απορροφάται
+    από από τα πρώτα εμπόδια που αυτό συναντά, φαινόμενο που έχει δειχθεί τόσο σε
+    καταγραφές πραγματικών περιστατικών, όσο και στη βιβλιογραφία.}
+  \label{fig:impulse-fields}
+\end{figure}
 
 %%% Local Variables:
 %%% mode: latex

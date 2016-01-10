@@ -311,7 +311,7 @@ void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
     cell ccell;
     btVector3 cell_origin, cpos;
     std::vector<particle*> neighbours;
-    float cf_step = lpg.step / lpg.cf_sdf;
+    float cf_step = lpg.step / lpg.sdf;
     long ixi = xsi*lpg.xss; long txi = std::min((xsi+1)*lpg.xss, lpg.x);
     long iyi = ysi*lpg.yss; long tyi = std::min((ysi+1)*lpg.yss, lpg.y);
     long izi = zsi*lpg.zss; long tzi = std::min((zsi+1)*lpg.zss, lpg.z);
@@ -321,17 +321,17 @@ void compute_cf_segment(lp_grid lpg, long xsi, long ysi, long zsi)
 		cell_origin = btVector3(xi*lpg.step, yi*lpg.step, zi*lpg.step);
 		all_neighbour_particles(lpg, xi, yi, zi, neighbours);
 		// loop over cf sampling points inside ccell
-		for (int z_sd=0; z_sd<lpg.cf_sdf; z_sd++)
-		    for (int y_sd=0; y_sd<lpg.cf_sdf; y_sd++)
-			for (int x_sd=0; x_sd<lpg.cf_sdf; x_sd++) {
+		for (int z_sd=0; z_sd<lpg.sdf; z_sd++)
+		    for (int y_sd=0; y_sd<lpg.sdf; y_sd++)
+			for (int x_sd=0; x_sd<lpg.sdf; x_sd++) {
 			    cpos = btVector3(x_sd, y_sd, z_sd);
 			    cpos *= cf_step;
 			    cpos += cell_origin;
 			    lpg.color_field[linearize(lpg,
-						      xi*lpg.cf_sdf + x_sd,
-						      yi*lpg.cf_sdf + y_sd,
-						      zi*lpg.cf_sdf + z_sd,
-						      lpg.cf_sdf)]
+						      xi*lpg.sdf + x_sd,
+						      yi*lpg.sdf + y_sd,
+						      zi*lpg.sdf + z_sd,
+						      lpg.sdf)]
 				= sum_cf(neighbours, cpos, lpg.step);
 			}
 	    }
@@ -350,4 +350,16 @@ void compute_cf(lp_grid lpg)
 	    for (long zsi=0; zsi<zs_count; zsi++, ti++)
 		threads[ti] = std::thread(compute_cf_segment, lpg, xsi, ysi, zsi);
     for (long ti=0; ti<thread_count; ti++) threads[ti].join();
+}
+
+void accumulate_if(lp_grid lpg, std::vector<terrain_impulse> tis)
+{
+    for (long tii=0; tii<tis.size(); tii++) {
+	btVector3 relative_position = tis[tii].position - lpg.origin;
+	float sd_step = lpg.step / lpg.sdf;
+	long i = (long) (0.5 + relative_position.getX() / sd_step);
+	long j = (long) (0.5 + relative_position.getY() / sd_step);
+	long k = (long) (0.5 + relative_position.getZ() / sd_step);
+	lpg.impulse_field[linearize(lpg, i, j, k, lpg.sdf)] += tis[tii].impulse;
+    }
 }

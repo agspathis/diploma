@@ -23,4 +23,6 @@ void adjust_fluid(fluid* fluid, lp_grid lpg, aabb fluid_aabb, aabb terrain_aabb)
 
 void compute_cf(lp_grid lpg);
 
+void accumulate_if(lp_grid lpg, std::vector<terrain_impulse> tis);
+
 #endif

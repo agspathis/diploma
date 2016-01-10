@@ -11,11 +11,11 @@
 #define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 50000
-#define TERRAIN_SCALING_FACTOR 0.5
+#define PARTICLES 5000
+#define TERRAIN_SCALING_FACTOR 0.04
 const char* output_dir = "../frames";
-const char* coast_filename = "../models/city_2.obj";
-aabb sea_aabb = { btVector3(1, 1, 160), btVector3(179, 10, 170) };
+const char* coast_filename = "../models/city_0.obj";
+aabb sea_aabb = { btVector3(0, 2, 0), btVector3(6, 6, 84) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim* fsimp = (fluid_sim*) dynamics_world->getWorldUserInfo();
@@ -76,10 +76,11 @@ int main (void)
 
 	// sim step and data export
 	dynamics_world->stepSimulation(FRAME_DT, ceil(FRAME_DT/sea.dt), sea.dt);
-	compute_cf(lpg);
 	particles_to_vtk(output_dir, sea, frame);
-	color_field_to_vtk(output_dir, lpg, frame);
 	terrain_impulses_to_vtk(output_dir, fsim.tis, frame);
+	compute_cf(lpg);
+	color_field_to_vtk(output_dir, lpg, frame);
+	accumulate_if(lpg, fsim.tis);
 
 	// clear impulse data accumulated over last step
 	fsim.tis.clear();
@@ -90,6 +91,9 @@ int main (void)
 	printf("Frame %03d/%03d, %ld.%06ld seconds\n",
 	       frame, FRAMES-1, (int) diff.tv_sec, (long) diff.tv_usec);
     }
+
+    // extract the accumulated impulse field samples.
+    impulse_field_to_vtk(output_dir, lpg);
 
     // cleanup
     dynamics_world->removeRigidBody(coast.rigid_body);

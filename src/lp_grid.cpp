@@ -46,16 +46,20 @@ int allocate_lp_grid (lp_grid* lpg, aabb domain, fluid fluid)
     lpg->origin = btVector3(domain.min.getX() - lpg->step/2,
 			    domain.min.getY() - lpg->step/2,
 			    domain.min.getZ() - lpg->step/2);
-    lpg->cf_sdf = DEFAULT_CF_SDF;
+    lpg->sdf = DEFAULT_SDF;
 
     // allocate memory for the 3 arrays
     lpg->map = (anchor**) malloc((lpg->cell_count+1) * sizeof(anchor*));
     lpg->anchors = (anchor*) malloc((lpg->cell_count+1) * sizeof(anchor));
     lpg->particles = (anchor) malloc ((lpg->particle_count+1) * sizeof(particle*));
     lpg->color_field = (float*) malloc ((lpg->cell_count)
-					* pow(lpg->cf_sdf, 3)
+					* pow(lpg->sdf, 3)
 					* sizeof(float));
-
+    lpg->impulse_field = (float*) malloc ((lpg->cell_count)
+					  * pow(lpg->sdf, 3)
+					  * sizeof(float));
+    for (long ifi=0; ifi<(lpg->cell_count)*pow(lpg->sdf, 3); ifi++)
+	lpg->impulse_field[ifi] = 0;
     return 0;
 }
 
@@ -160,6 +164,7 @@ void delete_lp_grid(lp_grid lpg)
     free(lpg.anchors);
     free(lpg.particles);
     free(lpg.color_field);
+    free(lpg.impulse_field);
 }
 
 cell get_cell(lp_grid lpg, long i, long j, long k)
