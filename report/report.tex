@@ -27,6 +27,7 @@
 % for frontpage
 \usepackage{adjustbox}
 \usepackage[normalem]{ulem}
+\usepackage{emptypage}
 % figures, custom commands
 \usepackage[hang,small,it]{caption}
 \usepackage{subcaption}
@@ -41,10 +42,10 @@
 \renewcommand{\hat}[1]{\oldhat{\mathbf{#1}}}
 
 \begin{document}
-\pagenumbering{roman}
 \input{frontpage.tex}
 \cleardoublepage
 \linespread{1.3}
+\pagenumbering{roman}
 \input{abstract.tex}
 \clearpage
 \input{acknowledgements.tex}
@@ -53,6 +54,8 @@
 \clearpage
 \tableofcontents
 \clearpage
+\listoffigures
+\cleardoublepage
 \pagenumbering{arabic}
 \input{introduction.tex}
 \clearpage
@@ -62,7 +65,7 @@
 % \clearpage
 % \input{discussion.tex}
 \clearpage
-\selectlanguage{english} %\footnotesize
+\selectlanguage{english} \small
 \renewcommand{\refname}{\gre{Βιβλιογραφία}}
 \bibliographystyle{acm}
 \bibliography{bibliography} 

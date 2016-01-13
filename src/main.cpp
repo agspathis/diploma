@@ -8,10 +8,10 @@
 #include "sph.h"
 
 // Constants and global parameters
-#define FRAMES 100
+#define FRAMES 10
 #define SAMPLES 50
 #define FRAME_DT 0.05
-#define PARTICLES 5000
+#define PARTICLES 80000
 #define TERRAIN_SCALING_FACTOR 0.04
 const char* output_dir = "../frames";
 const char* coast_filename = "../models/city_0.obj";

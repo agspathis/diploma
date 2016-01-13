@@ -256,14 +256,14 @@ $A(\vec{r}_i)$/$\vec{A}(\vec{r}_i)$
 Οι δύο ευρύτερα χρησιμοποιούμενες καταστατικές εξισώσεις είναι αυτή των ιδανικών αερίων
 \cite{muller2003particle, desbrun1996smoothed}
 \begin{equation}
-  \label{eq:ideal_state}
+  \label{eq:ideal-state}
   P = k(\rho - \rho_0),
 \end{equation}
 που συσχετίζει την πίεση με την απόκλιση από την πυκνότητα αναφοράς $\rho_0$
 με μια σταθερά αναλογίας $k$,
 καθώς και η εξίσωση \eng{Tait} \cite{becker2007weakly, monaghan20051703}
 \begin{equation}
-  \label{eq:tait_state}
+  \label{eq:tait-state}
   P = B \left( \left( \frac{\rho}{\rho_0} \right)^\gamma - 1 \right),
 \end{equation}
 όπου $\gamma=7$
@@ -271,7 +271,7 @@ $A(\vec{r}_i)$/$\vec{A}(\vec{r}_i)$
 σταθερά αναλογίας που ρυθμίζει την ανοχή στις διακυμάνσεις της πυκνότητας. Η τιμή της $B$
 καθορίζεται βάσει της αναλογίας
 \begin{equation}
-  \label{eq:compressibility_scale}
+  \label{eq:compressibility-scale}
   \frac{|\Delta\rho|}{\rho_0} \sim \frac{\|\vec{v}_f\|^2}{c_s^2},
 \end{equation}
 όπου $\Delta\rho = \rho - \rho_0$,
@@ -367,6 +367,7 @@ $W_{\text{\eng{spiky}}}$
 ευστάθεια της προσομοίωσης.
 
 \subsubsection{Ολοκλήρωση και χρονικό βήμα}
+\label{sssec:integration}
 \paragraph{} Εκτός της επιλογής του πυρήνα, καθοριστική για την ακρίβεια και ευστάθεια της
 προσομοίωσης είναι η επιλογη του χρονικού βήματος και της μεθόδου ολοκλήρωσης στο
 χρόνο. Το χρονικό βήμα υπολογίζεται συνήθως με βάση το κριτήριο \eng{CFL
