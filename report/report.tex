@@ -24,6 +24,7 @@
 \usepackage{float}
 \usepackage{rotating}
 \usepackage{longtable}
+\usepackage{booktabs}
 % for frontpage
 \usepackage{adjustbox}
 \usepackage[normalem]{ulem}
@@ -31,7 +32,7 @@
 % figures, custom commands
 \usepackage[hang,small,it]{caption}
 \usepackage{subcaption}
-\captionsetup{figurename=Σχήμα}
+\captionsetup{figurename=Εικόνα}
 \newcommand{\eng}[1]{\selectlanguage{english}#1\selectlanguage{greek}}
 \newcommand{\gre}[1]{\selectlanguage{greek}#1\selectlanguage{english}}
 \newcommand{\ttt}[1]{\selectlanguage{english}\texttt{#1}\selectlanguage{greek}}
@@ -59,13 +60,15 @@
 \pagenumbering{arabic}
 \input{introduction.tex}
 \clearpage
+\input{background.tex}
+\clearpage
 \input{implementation.tex}
 \clearpage
 \input{results.tex}
-% \clearpage
-% \input{discussion.tex}
 \clearpage
-\selectlanguage{english} \small
+\input{future.tex}
+\clearpage
+\selectlanguage{english} %\small
 \renewcommand{\refname}{\gre{Βιβλιογραφία}}
 \bibliographystyle{acm}
 \bibliography{bibliography} 
