@@ -1,4 +1,5 @@
 (ql:quickload :split-sequence)
+(use-package :split-sequence)
 
 (defun strip (input-pathname)
   "Strip the INPUT-PATHNAME obj file to just vertices and triangular faces."
@@ -42,9 +43,9 @@ lines."
 (defun strip-line (line)
   "Line processor function. Returns LINE intact if it's a vertex line, performs splitting
 into triangular faces for a face LINE, else discards it."
-  (let ((tokens (split-sequence:split-sequence #\space
-					       line
-					       :remove-empty-subseqs t)))
+  (let ((tokens (split-sequence #\space
+				line
+				:remove-empty-subseqs t)))
     (cond ((string= (car tokens) "v")
 	   (list line))
 	  ((string= (car tokens) "f")
@@ -55,7 +56,7 @@ into triangular faces for a face LINE, else discards it."
   "STRIP-LINE helper creating triangular face lines from one multilateral face line's
 tokens."
   (let* ((vertex-indices (mapcar (lambda (token)
-				   (car (split-sequence:split-sequence #\/ token)))
+				   (car (split-sequence #\/ token)))
 				 tokens))
 	 (triangle-count (- (length vertex-indices) 2))
 	 (result-lines nil))
@@ -72,9 +73,9 @@ tokens."
 coordinates by factors of X, Y and Z."
   (let ((factors (list x y z)))
     (lambda (line)
-      (let ((tokens (split-sequence:split-sequence #\space
-						   line
-						   :remove-empty-subseqs t)))
+      (let ((tokens (split-sequence #\space
+				    line
+				    :remove-empty-subseqs t)))
 	(cond ((string= (car tokens) "v")
 	       (list (apply #'format
 			    nil

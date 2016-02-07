@@ -21,14 +21,14 @@
 % \begin{minipage}[b][0.49\textheight][t]{\textwidth}
 \selectlanguage{english}
 \section*{Abstract}
-\paragraph{} The objective of this thesis was the accurate simulation of a tsunami hit on
-a coastline. Emphasis was given to the conservation of momentum during the simulation, as
-its distribution in space and time is the main factor of the wave's effects on the
-coastline. Due to this, a hybrid simulation method was adopted, based on the SPH method
-(Smoothed Particle Hydrodynamics), enriched with geometric constraints and rigid body
-interactions. The implementation is the result of cooperation between the Bullet physics
-engine and the custom SPH engine, which successively process the dynamic state of the
-fluid at every timestep of the simulation. Furthermore, in order to achieve better
+\paragraph{} The objective of this thesis was the accurate simulation of a tsunami impact
+upon a coastline. Emphasis was given to the conservation of momentum during the
+simulation, as its distribution in space and time is the main factor of the wave's effects
+on the coastline. Due to this, a hybrid simulation method was adopted, based on the SPH
+method (Smoothed Particle Hydrodynamics), enriched with geometric constraints and rigid
+body interactions. The implementation is the result of cooperation between the Bullet
+physics engine and a custom SPH engine, which successively process the dynamic state of
+the fluid at every timestep of the simulation. Furthermore, in order to achieve better
 performance a custom data structure (LP grid) was developed for the optimization of
 locality in data storage and minimization of access time. Simulation data is exported to
 text files in VTK format to allow interactive processing and visualization with the aid of
