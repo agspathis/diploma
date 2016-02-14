@@ -8,14 +8,14 @@
 #include "sph.h"
 
 // Constants and global parameters
-#define FRAMES 10
+#define FRAMES 100
 #define SAMPLES 50
 #define FRAME_DT 0.05
 #define PARTICLES 80000
-#define TERRAIN_SCALING_FACTOR 0.04
+#define TERRAIN_SCALING_FACTOR 1
 const char* output_dir = "../frames";
-const char* coast_filename = "../models/city_0.obj";
-aabb sea_aabb = { btVector3(0, 2, 0), btVector3(6, 6, 84) };
+const char* coast_filename = "../models/city_1.obj";
+aabb sea_aabb = { btVector3(2, 1, 80), btVector3(98, 7, 88) };
 
 void tick_callback(btDynamicsWorld* dynamics_world, btScalar timeStep) {
     fluid_sim* fsimp = (fluid_sim*) dynamics_world->getWorldUserInfo();

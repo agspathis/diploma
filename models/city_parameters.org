@@ -1,26 +1,26 @@
-* city_0
+* city_0 (scaling = 0.04)
   _main.cpp_
   #define FRAMES 100
   #define SAMPLES 50
   #define FRAME_DT 0.05
   #define PARTICLES 5000
-  #define TERRAIN_SCALING_FACTOR 0.04
+  #define TERRAIN_SCALING_FACTOR 1
   const char* output_dir = "../frames";
   const char* coast_filename = "../models/city_0.obj";
   aabb sea_aabb = { btVector3(0, 2, 0), btVector3(6, 6, 84) };
   _fluid.h_
   #define FLUID_INIT_VEL btVector3(10, 0, 0)
-  
-* city_1
+
+* city_1 (scaling = 0.01)
   _main.cpp_
   #define FRAMES 100
   #define SAMPLES 50
   #define FRAME_DT 0.05
-  #define PARTICLES 50000
-  #define TERRAIN_SCALING_FACTOR 0.01
+  #define PARTICLES 10000
+  #define TERRAIN_SCALING_FACTOR 1
   const char* output_dir = "../frames";
   const char* coast_filename = "../models/city_1.obj";
-  aabb sea_aabb = { btVector3(2, 1, 70), btVector3(98, 7, 78) };
+  aabb sea_aabb = { btVector3(2, 1, 80), btVector3(98, 7, 88) };
   _fluid.h_
   #define FLUID_INIT_VEL btVector3(0, 0, -10)
   
