@@ -9,7 +9,7 @@
 \titlerunning{Tsunami simulation}
 
 \author{Aristotelis Spathis-Papadiotis\inst{1} \and Konstantinos Moustakas\inst{1}}
-\authorrunning{Konstantinos Moustakas et al.} % abbreviated author list (for running head)
+\authorrunning{Aristotelis Spathis-Papadiotis et al.} % abbreviated author list (for running head)
 
 %%%% list of authors for the TOC (use if author list has to be modified)
 \tocauthor{Konstantinos Moustakas, Aristotelis Spathis-Papadiotis}
@@ -22,17 +22,18 @@
 
 \begin{abstract}
   This paper presents a simulation of a tsunami impact upon an urban coastline. Emphasis
-  was given to the conservation of momentum during the simulation, as its distribution in
-  space and time is the main factor of the wave's effects on the coastline. Due to this, a
-  hybrid simulation method was adopted, based on the Smoothed Particle Hydrodynamics
-  method, enriched with geometric constraints and rigid body interactions. The
-  implementation is the result of cooperation between the Bullet physics engine and a
-  custom SPH engine, which successively process the dynamic state of the fluid at every
-  timestep of the simulation. Furthermore, in order to achieve better performance a custom
-  data structure (LP grid) was developed for the optimization of locality in data storage
-  and minimization of access time. Simulation data is exported to VTK files to allow
-  interactive processing and visualization. \keywords{Fluid simulation, tsunami, SPH,
-    tsunami-coastline interaction, force visualization}
+  was given to the conservation of momentum, as its distribution in space and time is the
+  main factor of the wave's effects on the coastline. Due to this, a hybrid simulation
+  method was adopted, based on the Smoothed Particle Hydrodynamics (SPH) method, enriched
+  with geometric constraints and rigid body interactions. The implementation is the result
+  of cooperation between the Bullet physics engine and our custom SPH engine, which
+  successively process the dynamic state of the fluid at every timestep. Furthermore, in
+  order to achieve better performance a custom data structure (LP grid) was developed for
+  the optimization of locality in data storage and minimization of access time. Simulation
+  data is exported to VTK files, allowing interactive processing and
+  visualization. Experimental results demonstrate the benefits of impulse recording at
+  potential hazard estimation and evaluation of defense strategies. \keywords{Fluid
+    simulation, tsunami, SPH, tsunami-coastline interaction, force visualization}
 \end{abstract}
 
 \section{Introduction}
@@ -188,7 +189,7 @@ hand, are proportional to the laplacian of the velocity field:
 \end{equation}
 and are always antisymmetric, since they depend on velocity difference
 $\vec{v}_i - \vec{v}$ between particles.  In each timestep of the simulation, the density
-of all particles is first computed according to equation \ref{eq:d-grad}, as it depends
+of all particles is first computed according to equation (\ref{eq:d-grad}), as it depends
 only on the relative position of those. The pressure at each particle location is then
 obtained from its respective density through an equation of state. Subsequently, the
 pressure and viscosity forces are computed from the particle data and integrated back into
@@ -297,7 +298,7 @@ unreliable estimations from affecting the flow.
 The Bullet physics engine is used to handle the rigid body dynamics. The simulation domain
 is divided by a regular grid of spacing equal to the smoothing radius into cells
 containing the fluid particles, which are generated as Bullet objects and stored in a
-custom cell list data structure consisting of three vectors. As shown in figure
+custom cell list data structure consisting of three vectors. As shown in Figure
 \ref{fig:lp-grid}, particles are accessed by following pointers through those vectors in
 order, with the first encoding the 3D to linear locality preserving mapping of cells on
 the second, and the second pointing at first of the cell's particles which are
@@ -335,7 +336,7 @@ Figure \ref{fig:visualization} shows a typical simulation result with the aid of
 Paraview\textsuperscript{TM}, where the reconstructed wave surface and impulses exerted on
 a selected region are visualized along the 3D terrain model and plotted on a histogram. A
 comparison of the resulting impulse heatmap from the same tsunami impact upon an exposed
-model and one with a protective seawall is shown in figure \ref{fig:impulse-field}. These
+model and one with a protective seawall is shown in Figure \ref{fig:impulse-field}. These
 heatmaps confirm a well-documented observation in the literature, i.e. that tsunami energy
 is absorbed mostly by the first obstacle in its way. This has been noted by Danielsen et
 al. \cite{danielsen2005asian} and Kathiresan and Narayanasamy \cite{kathiresan2005601},
