@@ -147,13 +147,13 @@ the weighting ratio $m/\rho$ can be used to construct a weighted sum interpolant
 field $A$:
 \begin{equation}
   \label{eq:d-approx}
-  A(\vec{r}) = \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) W(\vec{r}-\vec{x}_i, h)
+  A(\vec{r}) = \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) W(\vec{r}-\vec{r}_i, h)
 \end{equation}
 which lies at the heart of SPH formulation. According to this, the gradient can be
 computed by the following approximation:
 \begin{equation}
   \label{eq:d-grad}
-  \nabla A(\vec{r}) = \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) \nabla W(\vec{r} - \vec{x}_i, h)
+  \nabla A(\vec{r}) = \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) \nabla W(\vec{r} - \vec{r}_i, h)
 \end{equation}
 The obvious advantage of this is the exclusive dependence on the smoothing kernel
 gradient, which can be precomputed for sensible kernel choices. However, this formula can
