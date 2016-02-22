@@ -317,13 +317,13 @@ $\rho*d\vec{x} = m$, καταλήγουμε στην ακόλουθη σχέση
 οποιουδήποτε μεγέθους $A$ σύμφωνα με την \eng{SPH}
 \begin{equation}
   \label{eq:d-approx}
-  A(\vec{r}) \approx \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) W(\vec{r}-\vec{x}_i, h)
+  A(\vec{r}) \approx \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) W(\vec{r}-\vec{r}_i, h)
 \end{equation}
 Σύμφωνα με αυτή, η τιμή της $A$ σε μια θέση του χώρου $\vec{r}$ μπορεί να υπολογιστεί
 προσεγγιστικά απο το σταθμισμένο άθροισμα των τιμών της στα γειτονικά σωματίδια $i$.  Η
 συνεισφορά κάθε σωματιδίου καθορίζεται τόσο από το λόγο της μάζας του προς την τοπική
 πυκνότητα $m_i/\rho_i$, όσο και από την απόστασή του από το σημείο υπολογισμού της $A$
-μέσω του πυρήνα $W(\vec{r}-\vec{x}_i, h)$.
+μέσω του πυρήνα $W(\vec{r}-\vec{r}_i, h)$.
 
 \subsubsection{Διανυσματικοί τελεστές σε διακριτοποιημένα πεδία}
 \label{sssec:vector-calc}
@@ -331,18 +331,18 @@ $\rho*d\vec{x} = m$, καταλήγουμε στην ακόλουθη σχέση
 από τη σχέση \ref{eq:d-approx} για τη βάθμωση του μεγέθους $A$ προκύπτει
 \begin{equation}
   \label{eq:d-grad}
-  \nabla A(\vec{r}) \approx \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) \nabla W(\vec{r} - \vec{x}_i, h)
+  \nabla A(\vec{r}) \approx \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) \nabla W(\vec{r} - \vec{r}_i, h)
 \end{equation}
 Αντίστοιχα, για την απόκλιση και το στροβιλισμό του διανυσματικού μέγεθους $\vec{A}$
 \begin{equation}
   \label{eq:d-div}
   \nabla \cdot \vec{A}(\vec{r}) \approx \sum_i \frac{m_i}{\rho_i} \vec{A}(\vec{r}_i)
-  \cdot \nabla W(\vec{r} - \vec{x}_i, h)
+  \cdot \nabla W(\vec{r} - \vec{r}_i, h)
 \end{equation}
 \begin{equation}
   \label{eq:d-curl}
   \nabla \times \vec{A}(\vec{r}) \approx \sum_i \frac{m_i}{\rho_i} \vec{A}(\vec{r}_i)
-  \times \nabla W(\vec{r} - \vec{x}_i, h)
+  \times \nabla W(\vec{r} - \vec{r}_i, h)
 \end{equation}
 Αξίζει να σημειωθεί η εξάρτηση της προσέγγισης αποκλειστικά από τις τιμές της συνάρτησης
 $A(\vec{r}_i)$/$\vec{A}(\vec{r}_i)$ και της βάθμωσης του πυρήνα εξομάλυνσης $\nabla W$,
@@ -368,12 +368,12 @@ $A(\vec{r}_i)$/$\vec{A}(\vec{r}_i)$ και της βάθμωσης του πυρ
 Αντικαθιστώντας στο δεξί μέλος τις βαθμώσεις με τους εκτιμητές τους κατά \eng{SPH}
 \begin{align}
   \label{eq:grad-est}
-  \nabla P &\approx \rho \left[ \frac{P}{\rho^2} \sum_i \frac{m_i}{\rho_i} \rho \nabla
+  \nabla P &\approx \rho \left[ \frac{P}{\rho^2} \sum_i \frac{m_i}{\rho_i} \rho_i \nabla
              W(\vec{r}-\vec{r}_i, h)
              +
              \sum_i \frac{m_i}{\rho_i} \frac{P_i}{\rho_i} \nabla W(\vec{r}-\vec{r}_i, h)
              \right] \nonumber \\
-           &\approx\rho \sum_i m_i \left(\frac{P}{\rho^2} + \frac{P_i}{\rho_i} \right)
+           &\approx\rho \sum_i m_i \left(\frac{P}{\rho^2} + \frac{P_i}{\rho_i^2} \right)
              \nabla W(\vec{r}-\vec{r}_i, h)
 \end{align}
 προκύπτει η σχέση που χρησιμοποιείται ευρύτατα για την εκτίμηση της βάθμωσης της πίεσης
@@ -382,7 +382,7 @@ $A(\vec{r}_i)$/$\vec{A}(\vec{r}_i)$ και της βάθμωσης του πυρ
 προσέγγιση
 \begin{equation}
   \label{eq:lapl-est}
-  \nabla^2\vec{v} \approx \sum_i \frac{m_i}{\rho_i} (\vec{v}_i - \vec{v}) \nabla^2
+  \nabla^2\vec{v}(\vec{r}) \approx \sum_i \frac{m_i}{\rho_i} (\vec{v}_i - \vec{v}) \nabla^2
   W(\vec{r}-\vec{r}_i, h)
 \end{equation}
 η οποία διαθέτει την επιθυμητή για την προσομοίωση των δυνάμεων ιξώδους ιδιότητα του
@@ -397,7 +397,7 @@ $A(\vec{r}_i)$/$\vec{A}(\vec{r}_i)$ και της βάθμωσης του πυρ
 αυτό από τη σχέση \ref{eq:d-approx}:
 \begin{equation}
   \label{eq:dens-est}
-  \rho(\vec{r}) \approx \sum_i m_i W(\vec{r}-\vec{x}_i, h)
+  \rho(\vec{r}) \approx \sum_i m_i W(\vec{r}-\vec{r}_i, h)
 \end{equation}
 Οι δύο ευρύτερα χρησιμοποιούμενες καταστατικές εξισώσεις είναι αυτή των ιδανικών αερίων
 \cite{muller2003particle, desbrun1996smoothed}
