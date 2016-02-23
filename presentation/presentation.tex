@@ -125,10 +125,6 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-\framedgraphic{} {figures/tsunami-hit.jpg} {Από \ttt{www.theatlantic.com}}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-
 \begin{frame}{Η γένεση ενός \eng{tsunami}}
   \includegraphics[width=0.5\textwidth]{figures/tsunami-gen-0.pdf}
   \includegraphics[width=0.5\textwidth]{figures/tsunami-gen-1.pdf}\\
@@ -139,12 +135,24 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
+\framedgraphic{} {figures/tsunami-hit.jpg} {Από \ttt{www.theatlantic.com}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
 \section{Μεθοδολογία Προσομοίωσης}
-\subsection{Ρευστοδυναμική}
 
 \begin{frame}
-  \begin{columns}[T]
+  \begin{center}
+    Μεθοδολογία Προσομοίωσης
+  \end{center}
+\end{frame}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+\subsection{Ρευστοδυναμική}
+
+\begin{frame}{Προσομοίωση ρευστών}
+  \begin{columns}[T]
     \begin{column}{.5\textwidth}
       \begin{block}{}
         Εξίσωση \eng{Navier-Stokes}:
@@ -175,8 +183,8 @@
         \item Αριθμητικές -- χρησιμοποιούν δίκτυο (\eng{mesh-based})
         \item Σωματιδιακές -- δεν χρησιμοποιούν δίκτυο (\eng{meshfree})
           \begin{itemize}
-          \item \eng{Lattice Boltzmann method}
           \item \eng{Smoothed-particle hydrodynamics}
+          \item \eng{Lattice Boltzmann method}
           \end{itemize}
         \end{itemize}
       \end{block}
@@ -194,64 +202,64 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
-\subsection{\texorpdfstring{\eng{LBM}}{LBM}}
+% \subsection{\texorpdfstring{\eng{LBM}}{LBM}}
 
-\begin{frame}{\eng{Lattice Boltzmann Method}}
+% \begin{frame}{\eng{Lattice Boltzmann Method}}
 
-  \begin{columns}[T]
+%   \begin{columns}[T]
 
-    \begin{column}{.6\textwidth}
-      \begin{block}{}
-        Προέρχεται από τα \eng{Lattice Gas Cellular Automata (LGCA)}\spacer
+%     \begin{column}{.6\textwidth}
+%       \begin{block}{}
+%         Προέρχεται από τα \eng{Lattice Gas Cellular Automata (LGCA)}\spacer
 
-        Χρησιμοποιεί τη διακριτοποιημένη στο χώρο και το χρόνο μορφή της
-        εξίσωσης \eng{Boltzmann}:
-        $$
-        \frac{\partial f}{\partial t}
-        + \vec{v} \cdot \nabla f
-        + \vec{F} \cdot \nabla_{\vec{p}}\hspace{2pt} f
-        = \Omega(f),
-        $$
-        όπου
-        \begin{itemize}
-        \item $f$ η κατανομή στο χώρο των φάσεων
-        \item $\vec{v}$ η ταχύτητα
-        \item $\vec{F}$ η εξωτερική δύναμη
-        \item $\vec{p}$ η ορμή
-        \item $\Omega(f)$ ο τελεστής σύγκρουσης
-        \end{itemize}
-        \spacer
-        \pause
+%         Χρησιμοποιεί τη διακριτοποιημένη στο χώρο και το χρόνο μορφή της
+%         εξίσωσης \eng{Boltzmann}:
+%         $$
+%         \frac{\partial f}{\partial t}
+%         + \vec{v} \cdot \nabla f
+%         + \vec{F} \cdot \nabla_{\vec{p}}\hspace{2pt} f
+%         = \Omega(f),
+%         $$
+%         όπου
+%         \begin{itemize}
+%         \item $f$ η κατανομή στο χώρο των φάσεων
+%         \item $\vec{v}$ η ταχύτητα
+%         \item $\vec{F}$ η εξωτερική δύναμη
+%         \item $\vec{p}$ η ορμή
+%         \item $\Omega(f)$ ο τελεστής σύγκρουσης
+%         \end{itemize}
+%         \spacer
+%         \pause
 
-        Επαναληπτική εκτέλεση δύο βημάτων:
-        \begin{itemize}
-        \item \eng{Collision:}
-          $f_i^t(\vec{x},t+\delta_t) = f_i(\vec{x},t)+\frac{1}{\tau_f}(f_i^{eq}-f_i)$
-        \item \eng{Streaming:}
-          $f_i(\vec{x}+\vec{v}\delta_t, t+\delta_t)=f_i^t(\vec{x},t+\delta_t),$
-        \end{itemize}
-        όπου $\tau_f$ η παράμετρος χαλάρωσης και $f_i^{eq}$ η κατανομή σε
-        θερμοδυναμική ισορροπία για την προσέγγιση του τελεστή σύγκρουσης κατά
-        \eng{BGK}.
-      \end{block}
-    \end{column}
+%         Επαναληπτική εκτέλεση δύο βημάτων:
+%         \begin{itemize}
+%         \item \eng{Collision:}
+%           $f_i^t(\vec{x},t+\delta_t) = f_i(\vec{x},t)+\frac{1}{\tau_f}(f_i^{eq}-f_i)$
+%         \item \eng{Streaming:}
+%           $f_i(\vec{x}+\vec{v}\delta_t, t+\delta_t)=f_i^t(\vec{x},t+\delta_t),$
+%         \end{itemize}
+%         όπου $\tau_f$ η παράμετρος χαλάρωσης και $f_i^{eq}$ η κατανομή σε
+%         θερμοδυναμική ισορροπία για την προσέγγιση του τελεστή σύγκρουσης κατά
+%         \eng{BGK}.
+%       \end{block}
+%     \end{column}
 
-    \begin{column}{.4\textwidth}
-      \begin{block}{}
-        \visible<2->{\includegraphics[width=.7\textwidth]{figures/lbm.png}}
-      \end{block}
-    \end{column}
-  \end{columns}
+%     \begin{column}{.4\textwidth}
+%       \begin{block}{}
+%         \visible<2->{\includegraphics[width=.7\textwidth]{figures/lbm.png}}
+%       \end{block}
+%     \end{column}
+%   \end{columns}
 
-  \onslide<1->\let\thefootnote\relax\footnote{Εικόνες από \ttt{science.uva.nl}
-    και \ttt{scholarpedia.org}}
-\end{frame}
+%   \onslide<1->\let\thefootnote\relax\footnote{Εικόνες από \ttt{science.uva.nl}
+%     και \ttt{scholarpedia.org}}
+% \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
 
 \subsection{\texorpdfstring{\eng{SPH}}{SPH}}
 
-\begin{frame}{Θεωρητική θεμελίωση}
+\begin{frame}{Θεωρητική θεμελίωση \eng{SPH}}
   Ξεκινάμε από την ταυτότητα δειγματοληψίας
   \begin{equation*}
     f(\vec{r}) = \int_Vf(\vec{x}) \delta(\vec{r} - \vec{x}) d\vec{x},
@@ -364,6 +372,14 @@
 
 \section{Υλοποίηση}
 
+\begin{frame}
+  \begin{center}
+    Υλοποίηση
+  \end{center}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \begin{frame}{Αρχιτεκτονική}
   \begin{center}
     \includegraphics[width=\textwidth, keepaspectratio]{figures/architecture.pdf}
@@ -379,10 +395,10 @@
     \begin{column}{.5\textwidth}
       \begin{itemize}
       \item Μηχανή προσομοίωσης μηχανικών αλληλεπιδράσεων
+      \item Ελεύθερο λογισμικό
       \item Ευέλικτη αντικειμενοστραφής αρχιτεκτονική
       \item Μηχανική στερεών και μαλακών σωμάτων με διακριτή και συνεχή ανίχνευση συγκρούσεων.
-      \item Υποστηρίζει διάφορα σχήματα συγκρούσεων όπως σφαίρα, ορθογώνιο παραλληλεπίπεδο,
-        κύλινδρο, κώνο και τριγωνικά πλέγματα επιφάνειας
+      \item Διάφορα σχήματα συγκρούσεων όπως σφαίρα και τριγωνικά πλέγματα επιφάνειας
       \item Δυνατότητα εφαρμογής κίνησης, γεωμετρικών περιορισμών, δυνάμεων, ώσεων
       \item Λεπτομερής καταγραφή πολλαπλών πληροφοριών για κάθε αλληλεπίδραση
       \item \eng{Position Based Fluids}
@@ -490,6 +506,15 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Αποτελέσματα}
+
+\begin{frame}
+  \begin{center}
+    Αποτελέσματα
+  \end{center}
+\end{frame}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
 \subsection{Ρευστό}
 
 \begin{frame}{Διαδραστική οπτικοποίηση}
@@ -533,19 +558,19 @@
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}{\eng{Heatmap} ώσεων (1/3)}
+\begin{frame}{\eng{Heatmap} ώσεων}
   \includegraphics[width=\textwidth]{figures/impulse-heatmap-0.png}
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}{\eng{Heatmap} ώσεων (2/3)}
+\begin{frame}{\eng{Heatmap} ώσεων}
   \includegraphics[width=\textwidth]{figures/impulse-heatmap-1.png}  
 \end{frame}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\begin{frame}{\eng{Heatmap} ώσεων (3/3)}
+\begin{frame}{\eng{Heatmap} ώσεων}
   \includegraphics[width=\textwidth]{figures/impulse-heatmap-2.png}
 \end{frame}
 
