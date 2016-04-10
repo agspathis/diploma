@@ -40,12 +40,12 @@
 
 \paragraph{} Simulations of natural phenomena are a precious tool for analysis and
 understanding of the processes behind them as well as the implications of
-those. Especially fluid dynamics is one of the fields most benefitted by the explosive
+those. Especially fluid dynamics is one of the fields most benefited by the explosive
 growth of high performance parallel computing architectures of the last years. Tsunamis
 are one of the most devastating natural disasters, with much attention drawn to them
 lately, especially after the 2004 Indian Ocean tsunami and the 2011 T\={o}hoku earthquake
 and tsunami, two of the largest incidents in modern history. Multiscale modelling of
-tsunami generation, propagation and impact is a trending research area as respective
+tsunami generation, propagation and impact is a trending research area, as respective
 simulations give valuable insights into the underlying mechanisms and relations between
 the various stages of an unfolding tsunami incident, while also facilitating the
 assessment of potential hazard it poses upon impact on a coastline.
@@ -90,14 +90,14 @@ course and coastal inundation. Simulations of the devastating 2004 Indian Ocean 
 have been carried out by Wang and Liu \cite{wang2007} and Ioualalen et
 al. \cite{ioualalen2007}, using nonlinear shallow water equations and nonlinear Boussinesq
 models respectively. In both cases, good agreement between calculations and field
-measurements of inundation and runup indicate the robustness of these approches. Samaras
-et al. \cite{samaras2015} used a 2D horizontal model based on the higher oder Boussinesq
-equations to simulate tsunami-induced coastal inundation in two relevant areas of interest
-in the Mediterranean. Using two different models, Kakinuma \cite{kakinuma2008} reproduced
-a past incident with sufficient accuracy. The governing equations for both were the
-continuity and Reynolds equations for incompressible fluids in porous media, while water
-surface displacement was determined by the vertically integrated continuity equation for
-the first and the 3D Volume of Fluid method for the second model.
+measurements of inundation and runup indicate the robustness of these approches. Using two
+different models, Kakinuma \cite{kakinuma2008} reproduced a past incident with sufficient
+accuracy. The governing equations for both were the continuity and Reynolds equations for
+incompressible fluids in porous media, while water surface displacement was determined by
+the vertically integrated continuity equation for the first and the 3D Volume of Fluid
+method for the second model. Lastly, Samaras et al. \cite{samaras2015} used a 2D
+horizontal model based on the higher oder Boussinesq equations to simulate tsunami-induced
+coastal inundation in two relevant areas of interest in the Mediterranean.
 
 \paragraph{} Relating to the SPH method, Desbrun and Gascuel \cite{desbrun1996smoothed}
 used it to animate highly deformable bodies of various stiffness and viscosity, while
@@ -140,7 +140,7 @@ by Akinci et al. \cite{akinci2012versatile}, where rigid surfaces are sampled by
 particles, which adaptively contribute to fluid properties to address boundary region
 deficiencies and inhomogeneities, in order to incorporate rigid bodies to a unified
 hydrodynamic framework. Finally, a thorough overview of various implementation algorithms
-and data structures together with their advantages and drawbacks is provided by
+and data structures for SPH, together with their advantages and drawbacks is provided by
 Dom\'{i}nguez et al. \cite{dominguez2011}.
 
 \section{Proposed framework}
@@ -187,7 +187,7 @@ field $A$:
   \label{eq:d-approx}
   A(\vec{r}) = \sum_i \frac{m_i}{\rho_i} A(\vec{r}_i) W(\vec{r}-\vec{r}_i, h)
 \end{equation}
-which lies at the heart of SPH formulation. According to this, the gradient can be
+which lies at the heart of the SPH formulation. According to this, the gradient can be
 computed by the following approximation:
 \begin{equation}
   \label{eq:d-grad}
@@ -219,7 +219,7 @@ to obtain an alternative approximation of gradient
              \nabla W(\vec{r}-\vec{r}_i, h)
 \end{align}
 which is antisymmetric for all interacting particle pairs. Viscosity forces on the other
-hand, are proportional to the laplacian of the velocity field:
+hand are proportional to the laplacian of the velocity field:
 \begin{equation}
   \label{eq:lapl-est}
   \nabla^2\vec{v} = \sum_i \frac{m_i}{\rho_i} (\vec{v}_i - \vec{v}) \nabla^2
@@ -227,11 +227,15 @@ hand, are proportional to the laplacian of the velocity field:
 \end{equation}
 and are always antisymmetric, since they depend on velocity difference
 $\vec{v}_i - \vec{v}$ between particles.  In each timestep of the simulation, the density
-of all particles is first computed according to equation (\ref{eq:d-grad}), as it depends
-only on the relative position of those. The pressure at each particle location is then
-obtained from its respective density through an equation of state. After this step, the
-pressure and viscosity forces are computed from the particle data and integrated back into
-the position and velocity of the particles.
+of all particles is first computed according to equation (\ref{eq:d-approx}):
+\begin{equation}
+  \label{eq:dens-est}
+  \rho = \sum_i m_i W(\vec{r}-\vec{r}_i, h)
+\end{equation}
+as it depends only on the relative position of those. The pressure at each particle
+location is then obtained from its respective density through an equation of state. After
+this step, the pressure and viscosity forces are computed from the particle data and
+integrated back into the position and velocity of the particles.
 
 \subsection{Implementation}
 
@@ -262,7 +266,7 @@ criterion:
 \end{equation}
 for values of Courant number $C\approx0.5$ with characteristic length $\delta x$ equal to
 the particle effective radius and maximum velocity $v_{\text{max}}$ determined by the
-maximum potential energy in the initial configuration.
+maximum mechanical energy in the initial configuration.
 
 \subsubsection{SPH parameters} Following standard practice, we used three different
 smoothing kernels for density, pressure gradient and velocity laplacian computation,
@@ -339,9 +343,10 @@ affecting the flow.
 \begin{figure}
   \includegraphics[width=\textwidth]{../report/figures/lp-grid.pdf}
   \caption{Organization of the custom data structure designed for the efficient storing
-    and interaction scanning between simulation particles. Top-down, the first vector
-    implements the 3D to linear locality preserving mapping of cell anchors onto the
-    second, which in turn points to each cell's particles on the third.}
+    and interaction scanning between simulation particles. From top to bottom,
+    \texttt{map} encodes the 3D to linear locality preserving mapping onto
+    \texttt{anchors}, which in turn points to each cell's particles in
+    \texttt{particles}.}
   \label{fig:lp-grid}
 \end{figure}
 
@@ -368,7 +373,7 @@ $i_y$, $i_z$ specifying its position in the grid are converted to a linear index
 simple way is through the formula $i = i_z * N_y * N_x + i_y * N_x + i_x$, where $N_x$
 $N_y$ $N_z$ is the number of cells along the $x$, $y$ and $z$ axis in the grid
 respectively). The \texttt{map} vector serves as a lookup table, so that its $i$-th
-element contains the pointer to that cell's representation on \texttt{anchors}. LP grid
+element contains a pointer to that cell's representation on \texttt{anchors}. LP grid
 advantages include cohesive storage, quick neighbour search and interaction scanning,
 exploitation of the SPH algorithm access patterns and fast, in-place update.
 
@@ -407,8 +412,8 @@ initial velocity.
   \includegraphics[width=.32\textwidth]{figures/impulse-heatmap-1.png}
   \includegraphics[width=.33\textwidth]{figures/impulse-heatmap-2.png}
   \caption{Tsunami impulse heatmaps for three different urban models visualized under
-    Paraview\textsuperscript{TM}. Most of the energy of the waves is absorbed by the first
-    obstacle in their way.}
+    Paraview\textsuperscript{TM}. Most of the wave's energy is absorbed by the first
+    obstacle in its way.}
   \label{fig:impulse-heatmaps}
 \end{figure}
 
@@ -441,7 +446,7 @@ first line of defense.
   \includegraphics[width=\textwidth]{figures/if-city0-free.png}
   \includegraphics[width=\textwidth]{figures/if-city0-seawall.png}
   \caption{Comparison between the impulse heatmap of a tsunami hit on the same urban
-    coastline model, with (up) and without (down) the protection from a seawall. Seawalls
+    coastline model, without (top) and with (bottom) the protection of a seawall. Seawalls
     are commonly found in high-risk areas, as they reduce impact effects significantly.}
   \label{fig:impulse-heatmaps-seawall}
 \end{figure}
@@ -467,7 +472,7 @@ while the rest corresponds to multi-threaded code of our SPH engine.
 
 \paragraph{} Although our framework provides rich and detailed data, a quantitative
 comparison to either field measurements or results of other methods utilizing different
-versions of the SPH formulations couldn't be reliably made. We haven't yet implemented a
+versions of the SPH formulation couldn't be reliably made. We haven't yet implemented a
 way to configure the wave's initial conditions and coastline terrain to model the impact
 according to predictions of large scale simulations or data from past
 incidents. Qualitatively, our method seems to compare well to similar codes utilizing SPH
